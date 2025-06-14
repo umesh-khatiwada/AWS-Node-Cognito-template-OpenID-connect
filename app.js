@@ -4,7 +4,33 @@ const { Issuer, generators } = require('openid-client');
 const axios = require('axios');
 const https = require('https');
 const dnscache = require('dns-cache');
+const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
+const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
+const fs = require('fs').promises;
+const multer = require('multer');
+const path = require('path');
 const app = express();
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, 'uploads/') // Make sure this directory exists
+    },
+    filename: function (req, file, cb) {
+        cb(null, file.originalname)
+    }
+});
+
+const upload = multer({ storage: storage });
+
+// AWS Configuration
+const s3Client = new S3Client({
+    region: "us-east-1",
+    credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+    }
+});
 
 // Enable DNS caching
 dnscache(300000); // Cache DNS for 5 minutes
@@ -75,8 +101,8 @@ async function initializeClient() {
             response_types: ['code'],
             token_endpoint_auth_method: 'client_secret_post',
             http_options: {
-                timeout: 30000, // 30 seconds timeout for all HTTP requests
-                retry: 2 // Retry failed requests twice
+                timeout: 30000,
+                retry: 2 
             }
         });
 
@@ -93,6 +119,24 @@ const checkAuth = (req, res, next) => {
     next();
 };
 
+// JWT verification middleware
+const verifyToken = async (req, res, next) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader) {
+            return res.status(401).json({ error: 'No token provided' });
+        }
+
+        // Token validation can be done using Cognito's JWKS
+        // For now, we'll just verify the token's presence
+        req.user = { token: authHeader };
+        next();
+    } catch (error) {
+        console.error('Token verification error:', error);
+        return res.status(401).json({ error: 'Invalid token' });
+    }
+};
+
 // Home route
 app.get('/', checkAuth, (req, res) => {
     res.render('home', {
@@ -107,7 +151,6 @@ app.get('/callback', async (req, res) => {
         console.warn('No code provided in callback');
         return res.redirect('/');
     }
-
     try {
         console.log('Processing callback with code...');
         const params = client.callbackParams(req);
@@ -121,10 +164,8 @@ app.get('/callback', async (req, res) => {
         if (req.session.state && params.state !== req.session.state) {
             throw new Error('State mismatch in callback');
         }
-
         console.log('Exchanging code for tokens...');
         const tokenEndpoint = `${cognitoDomain}/oauth2/token`;
-        
         // Create authorization header
         const basicAuth = Buffer.from(`${client.client_id}:${client.client_secret}`).toString('base64');
         
@@ -168,7 +209,6 @@ app.get('/callback', async (req, res) => {
         
         let errorMessage = 'Authentication failed. ';
         if (axios.isAxiosError(err)) {
-            // Log detailed error information
             console.error('Detailed Axios error:', {
                 message: err.message,
                 code: err.code,
@@ -212,7 +252,6 @@ app.get('/callback', async (req, res) => {
             });
             errorMessage += err.message || 'Please try again.';
         }
-        
         return res.render('error', { error: errorMessage });
     }
 });
@@ -223,7 +262,6 @@ app.get('/login', (req, res) => {
         console.error('OpenID client not initialized');
         return res.status(500).send('Authentication service not available');
     }
-
     const state = generators.state();
     req.session.state = state;
 
@@ -239,12 +277,125 @@ app.get('/login', (req, res) => {
 // Logout route
 app.get('/logout', (req, res) => {
     req.session.destroy(() => {
-        // Use the same Cognito domain as in initializeClient
-        const cognitoDomain = 'myapp.auth.us-east-1.amazoncognito.com'; // Verify this
+        const cognitoDomain = 'us-east-1bvbdgpdwd.auth.us-east-1.amazoncognito.com'; 
         const logoutUrl = `https://${cognitoDomain}/logout?client_id=7mcc0trmggj5145u6jd1sg919a&logout_uri=http://localhost:3000`;
         res.redirect(logoutUrl);
     });
 });
+
+// Upload page route
+app.get('/upload', checkAuth, (req, res) => {
+    if (!req.isAuthenticated) {
+        return res.redirect('/login');
+    }
+    res.render('upload', {
+        token: req.session.tokenSet?.id_token || ''
+    });
+});
+
+// API endpoint for getting presigned URL
+app.post('/api/presigned-url', verifyToken, express.json(), async (req, res) => {
+    try {
+        const { file_name } = req.body;
+        if (!file_name) {
+            return res.status(400).json({ error: 'File name is required' });
+        }
+
+        // Get the token from the request headers
+        const token = req.headers.authorization;
+
+        // Use the utility function to handle the upload process
+        const result = await uploadFileWithPresignedUrl(
+            file_name,
+            req.files?.file?.path,
+            token
+        );
+
+        if (!result.success) {
+            throw new Error(result.message);
+        }
+
+        // Log and return the presigned URL in the response
+        console.log('Presigned URL generated:', result.presignedUrl);
+        return res.json({
+            message: 'File upload URL generated successfully',
+            uploadUrl: result.presignedUrl,
+            data: result.response
+        });
+
+    } catch (error) {
+        console.error('Upload error:', error);
+        return res.status(500).json({
+            error: 'Failed to upload file',
+            details: error.message
+        });
+    }
+});
+
+// Utility function for file uploads
+async function uploadFileWithPresignedUrl(fileName, filePath, token) {
+    try {
+        // Step 1: Get presigned URL
+        const presignedUrlResponse = await axios.post(
+            'https://brz8v7rkb1.execute-api.us-east-1.amazonaws.com/dev/',
+            {
+                body: JSON.stringify({ file_name: fileName })
+            },
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': token
+                }
+            }
+        );
+
+        if (presignedUrlResponse.status !== 200) {
+            throw new Error('Failed to get presigned URL');
+        }
+
+        // Log the full response and extract the URL
+        console.log('Presigned URL Response:', JSON.stringify(presignedUrlResponse.data, null, 2));
+        const uploadUrl = presignedUrlResponse.data.uploadUrl || presignedUrlResponse.data.url;
+        console.log('Presigned URL:', uploadUrl);
+
+        if (!uploadUrl) {
+            throw new Error('No upload URL in response');
+        }
+
+        // Step 2: Upload file using presigned URL if filePath is provided
+        if (filePath) {
+            const fileContent = await fs.readFile(filePath);
+            const uploadResponse = await axios.put(uploadUrl, fileContent, {
+                headers: {
+                    'Content-Type': 'application/octet-stream'
+                }
+            });
+
+            return {
+                success: true,
+                message: 'File uploaded successfully',
+                presignedUrl: uploadUrl,
+                response: uploadResponse.data
+            };
+        }
+
+        // If no filePath, just return the presigned URL
+        return {
+            success: true,
+            message: 'Presigned URL generated successfully',
+            presignedUrl: uploadUrl,
+            response: null
+        };
+
+    } catch (error) {
+        console.error('Upload error:', error);
+        return {
+            success: false,
+            message: error.message,
+            error: error
+        };
+    }
+}
 
 // Start server after initializing the client
 const port = 3000;

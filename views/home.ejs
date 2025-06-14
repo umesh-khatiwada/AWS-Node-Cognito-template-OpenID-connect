@@ -13,7 +13,10 @@
             <p>Here are some attributes you can use as a developer:</p>
             <p><%= JSON.stringify(userInfo, null, 4) %></p>
         </div>
-        <a href="/logout">Logout</a>
+        <div style="margin: 20px 0;">
+            <a href="/upload" style="display: inline-block; background-color: #0066cc; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; margin-right: 10px;">Upload Files</a>
+            <a href="/logout" style="display: inline-block; background-color: #dc3545; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">Logout</a>
+        </div>
     <% } else { %>
         <p>Please log in to continue</p>
         <a href="/login">Login</a>

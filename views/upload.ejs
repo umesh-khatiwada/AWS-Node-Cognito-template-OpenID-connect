@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>File Upload</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .upload-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .button {
+            background-color: #0066cc;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .button:hover {
+            background-color: #0052a3;
+        }
+        #uploadStatus {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background-color: #cce5ff;
+            color: #004085;
+            border: 1px solid #b8daff;
+        }
+        .progress {
+            margin-top: 10px;
+            height: 20px;
+            background-color: #f5f5f5;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            background-color: #0066cc;
+            width: 0;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="upload-container">
+        <h1>File Upload</h1>
+        <div class="form-group">
+            <label for="file">Select File:</label>
+            <input type="file" id="file" accept="video/*,audio/*" />
+        </div>
+        <button onclick="uploadFile()" class="button" id="uploadButton">Upload</button>
+        <div id="uploadStatus"></div>
+        <div id="progressContainer" style="display: none;">
+            <div class="progress">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    async function uploadFile() {
+        const fileInput = document.getElementById('file');
+        const statusDiv = document.getElementById('uploadStatus');
+        
+        if (!fileInput.files[0]) {
+            showStatus('Please select a file', 'error');
+            return;
+        }
+
+        const file = fileInput.files[0];
+        
+        try {
+            showStatus('Getting upload URL...', 'info');
+            // First, get the presigned URL from our local endpoint
+            const presignedResponse = await fetch('/api/presigned-url', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer <%= token %>'
+                },
+                body: JSON.stringify({
+                    file_name: file.name
+                })
+            });
+
+            if (!presignedResponse.ok) {
+                const errorData = await presignedResponse.json();
+                throw new Error(errorData.error || 'Failed to get upload URL');
+            }
+
+            const presignedData = await presignedResponse.json();
+            if (!presignedData.uploadUrl) {
+                throw new Error('No upload URL received');
+            }
+
+            showStatus('Uploading file...', 'info');
+            document.getElementById('progressContainer').style.display = 'block';
+            
+            // Now upload the file using the presigned URL
+            const uploadResponse = await fetch(presignedData.uploadUrl, {
+                method: 'PUT',
+                body: file,
+                headers: {
+                    'Content-Type': file.type
+                }
+            });
+
+            if (!uploadResponse.ok) {
+                throw new Error(`Upload failed: ${uploadResponse.statusText}`);
+            }
+
+            document.getElementById('progressBar').style.width = '100%';
+            showStatus('File uploaded successfully!', 'success');
+            document.getElementById('file').value = ''; // Clear the file input
+        } catch (error) {
+            console.error('Upload error:', error);
+            showStatus(`Upload failed: ${error.message}`, 'error');
+            document.getElementById('progressBar').style.width = '0%';
+        }
+    }
+
+    function showStatus(message, type) {
+        const statusDiv = document.getElementById('uploadStatus');
+        statusDiv.textContent = message;
+        statusDiv.className = type;
+        statusDiv.style.display = 'block';
+    }
+    </script>
+</body>
+</html>

@@ -6,7 +6,7 @@ const https = require('https');
 const dnscache = require('dns-cache');
 const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
-const fs = require('fs').promises;
+const fs = require('fs');
 const multer = require('multer');
 const path = require('path');
 const app = express();
@@ -14,9 +14,10 @@ const app = express();
 // Configure multer for file uploads
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, 'uploads/') // Make sure this directory exists
+        cb(null, 'uploads/')
     },
     filename: function (req, file, cb) {
+        // Keep the original filename
         cb(null, file.originalname)
     }
 });
@@ -29,7 +30,8 @@ const s3Client = new S3Client({
     credentials: {
         accessKeyId: process.env.AWS_ACCESS_KEY_ID,
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
-    }
+    },
+    signatureVersion: 'v4'
 });
 
 // Enable DNS caching
@@ -294,20 +296,15 @@ app.get('/upload', checkAuth, (req, res) => {
 });
 
 // API endpoint for getting presigned URL
-app.post('/api/presigned-url', verifyToken, express.json(), async (req, res) => {
+app.post('/api/presigned-url', verifyToken, upload.single('file'), async (req, res) => {
     try {
-        const { file_name } = req.body;
-        if (!file_name) {
-            return res.status(400).json({ error: 'File name is required' });
+        if (!req.file) {
+            return res.status(400).json({ error: 'No file uploaded' });
         }
-
-        // Get the token from the request headers
         const token = req.headers.authorization;
-
-        // Use the utility function to handle the upload process
         const result = await uploadFileWithPresignedUrl(
-            file_name,
-            req.files?.file?.path,
+            req.file.originalname,
+            req.file.path,
             token
         );
 
@@ -315,10 +312,9 @@ app.post('/api/presigned-url', verifyToken, express.json(), async (req, res) => 
             throw new Error(result.message);
         }
 
-        // Log and return the presigned URL in the response
-        console.log('Presigned URL generated:', result.presignedUrl);
+        // Return the response
         return res.json({
-            message: 'File upload URL generated successfully',
+            message: 'File uploaded successfully',
             uploadUrl: result.presignedUrl,
             data: result.response
         });
@@ -335,6 +331,7 @@ app.post('/api/presigned-url', verifyToken, express.json(), async (req, res) => 
 // Utility function for file uploads
 async function uploadFileWithPresignedUrl(fileName, filePath, token) {
     try {
+        console.log('Getting presigned URL for:', fileName);
         // Step 1: Get presigned URL
         const presignedUrlResponse = await axios.post(
             'https://brz8v7rkb1.execute-api.us-east-1.amazonaws.com/dev/',
@@ -353,24 +350,41 @@ async function uploadFileWithPresignedUrl(fileName, filePath, token) {
             throw new Error('Failed to get presigned URL');
         }
 
-        // Log the full response and extract the URL
+        // Parse the response body
         console.log('Presigned URL Response:', JSON.stringify(presignedUrlResponse.data, null, 2));
-        const uploadUrl = presignedUrlResponse.data.uploadUrl || presignedUrlResponse.data.url;
+        const responseBody = JSON.parse(presignedUrlResponse.data.body);
+        const uploadUrl = responseBody.upload_url;
         console.log('Presigned URL:', uploadUrl);
 
         if (!uploadUrl) {
             throw new Error('No upload URL in response');
         }
-
-        // Step 2: Upload file using presigned URL if filePath is provided
+        // Step 2: Upload file to S3
         if (filePath) {
-            const fileContent = await fs.readFile(filePath);
-            const uploadResponse = await axios.put(uploadUrl, fileContent, {
+            const absoluteFilePath = path.resolve(filePath);
+            console.log('Reading file from (relative path):', filePath);
+            console.log('Reading file from (absolute path):', absoluteFilePath);
+            const fileBuffer = await fs.promises.readFile(filePath);
+            
+            console.log('Uploading file to S3...', {
+                fileSize: fileBuffer.length,
+                fileName: fileName,
+                contentType: 'application/octet-stream'
+            });
+            // Extract URL parameters
+            const urlParams = new URL(uploadUrl);
+            const uploadResponse = await axios.post(uploadUrl, fileBuffer, {
                 headers: {
-                    'Content-Type': 'application/octet-stream'
+                     "Content-Type": "multipart/form-data",
                 }
             });
 
+            if (uploadResponse.status !== 200) {
+                console.error('Upload failed with status:', uploadResponse.status, 'Response:', uploadResponse.data);
+                throw new Error(`Upload failed with status ${uploadResponse.status}: ${uploadResponse.data}`);
+            }
+
+            console.log('File uploaded successfully');
             return {
                 success: true,
                 message: 'File uploaded successfully',
@@ -378,8 +392,6 @@ async function uploadFileWithPresignedUrl(fileName, filePath, token) {
                 response: uploadResponse.data
             };
         }
-
-        // If no filePath, just return the presigned URL
         return {
             success: true,
             message: 'Presigned URL generated successfully',
@@ -388,10 +400,18 @@ async function uploadFileWithPresignedUrl(fileName, filePath, token) {
         };
 
     } catch (error) {
-        console.error('Upload error:', error);
+        console.error('Error in uploadFileWithPresignedUrl:', error);
+        if (error.response) {
+            console.error('Error response:', {
+                status: error.response.status,
+                statusText: error.response.statusText,
+                headers: error.response.headers,
+                data: error.response.data
+            });
+        }
         return {
             success: false,
-            message: error.message,
+            message: error.response?.data?.Message || error.message,
             error: error
         };
     }

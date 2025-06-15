@@ -301,7 +301,11 @@ app.post('/api/presigned-url', verifyToken, upload.single('file'), async (req, r
         if (!req.file) {
             return res.status(400).json({ error: 'No file uploaded' });
         }
+
+        // Get the token from the request headers
         const token = req.headers.authorization;
+
+        // Get presigned URL for the file
         const result = await uploadFileWithPresignedUrl(
             req.file.originalname,
             req.file.path,
@@ -332,6 +336,7 @@ app.post('/api/presigned-url', verifyToken, upload.single('file'), async (req, r
 async function uploadFileWithPresignedUrl(fileName, filePath, token) {
     try {
         console.log('Getting presigned URL for:', fileName);
+        
         // Step 1: Get presigned URL
         const presignedUrlResponse = await axios.post(
             'https://brz8v7rkb1.execute-api.us-east-1.amazonaws.com/dev/',
@@ -363,7 +368,7 @@ async function uploadFileWithPresignedUrl(fileName, filePath, token) {
         if (filePath) {
             const absoluteFilePath = path.resolve(filePath);
             console.log('Reading file from (relative path):', filePath);
-            console.log('Reading file from (absolute path):', absoluteFilePath);
+            console.log('Reading file from (absolute path):', absoluteFilePath);            // Read file as buffer
             const fileBuffer = await fs.promises.readFile(filePath);
             
             console.log('Uploading file to S3...', {
@@ -371,13 +376,15 @@ async function uploadFileWithPresignedUrl(fileName, filePath, token) {
                 fileName: fileName,
                 contentType: 'application/octet-stream'
             });
-            // Extract URL parameters
-            const urlParams = new URL(uploadUrl);
-            const uploadResponse = await axios.post(uploadUrl, fileBuffer, {
-                headers: {
-                     "Content-Type": "multipart/form-data",
-                }
-            });
+            const urlParams = new URL(uploadUrl)
+            const uploadResponse = await axios.put(uploadUrl, {
+      data: filePath,
+    }, {
+      headers: {
+        'Content-Type': 'application/octet-stream'
+      }
+    }
+        );
 
             if (uploadResponse.status !== 200) {
                 console.error('Upload failed with status:', uploadResponse.status, 'Response:', uploadResponse.data);
@@ -392,6 +399,8 @@ async function uploadFileWithPresignedUrl(fileName, filePath, token) {
                 response: uploadResponse.data
             };
         }
+
+        // If no filePath, just return the presigned URL
         return {
             success: true,
             message: 'Presigned URL generated successfully',

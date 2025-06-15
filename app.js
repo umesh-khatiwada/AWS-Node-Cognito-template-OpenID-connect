@@ -311,11 +311,6 @@ app.post('/api/presigned-url', verifyToken, upload.single('file'), async (req, r
             req.file.path,
             token
         );
-
-        if (!result.success) {
-            throw new Error(result.message);
-        }
-
         // Return the response
         return res.json({
             message: 'File uploaded successfully',
@@ -370,26 +365,22 @@ async function uploadFileWithPresignedUrl(fileName, filePath, token) {
             console.log('Reading file from (relative path):', filePath);
             console.log('Reading file from (absolute path):', absoluteFilePath);            // Read file as buffer
             const fileBuffer = await fs.promises.readFile(filePath);
-            
-            console.log('Uploading file to S3...', {
-                fileSize: fileBuffer.length,
-                fileName: fileName,
-                contentType: 'application/octet-stream'
+            axios.put(uploadUrl, absoluteFilePath, {
+            headers: {
+                'Content-Type': 'video/mp4', 
+            },
+            maxBodyLength: Infinity,
+            maxContentLength: Infinity,
+            }).then((res) => {
+            console.log('Upload successful:', res.status);
+            }).catch((err) => {
+            console.error('Upload failed:', err.response?.status, err.response?.data || err.message);
             });
-            const urlParams = new URL(uploadUrl)
-            const uploadResponse = await axios.put(uploadUrl, {
-      data: filePath,
-    }, {
-      headers: {
-        'Content-Type': 'application/octet-stream'
-      }
-    }
-        );
 
-            if (uploadResponse.status !== 200) {
-                console.error('Upload failed with status:', uploadResponse.status, 'Response:', uploadResponse.data);
-                throw new Error(`Upload failed with status ${uploadResponse.status}: ${uploadResponse.data}`);
-            }
+            // if (uploadResponse.status !== 200) {
+            //     console.error('Upload failed with status:', uploadResponse.status, 'Response:', uploadResponse.data);
+            //     throw new Error(`Upload failed with status ${uploadResponse.status}: ${uploadResponse.data}`);
+            // }
 
             console.log('File uploaded successfully');
             return {

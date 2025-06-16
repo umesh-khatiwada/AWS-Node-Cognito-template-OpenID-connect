@@ -4,9 +4,9 @@ const { Issuer, generators } = require('openid-client');
 const axios = require('axios');
 const https = require('https');
 const dnscache = require('dns-cache');
-const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
-const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
-const fs = require('fs');
+const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
+const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
+const fs = require('fs').promises;
 const multer = require('multer');
 const path = require('path');
 const app = express();
@@ -14,19 +14,18 @@ const app = express();
 // Configure multer for file uploads
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, 'uploads/')
+        cb(null, 'uploads/');
     },
     filename: function (req, file, cb) {
-        // Keep the original filename
-        cb(null, file.originalname)
+        cb(null, file.originalname);
     }
 });
 
 const upload = multer({ storage: storage });
 
-// AWS Configuration
+// AWS Configuration (not used for presigned URL but kept for potential use)
 const s3Client = new S3Client({
-    region: "us-east-1",
+    region: 'us-east-1',
     credentials: {
         accessKeyId: process.env.AWS_ACCESS_KEY_ID,
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
@@ -48,9 +47,9 @@ const httpsAgent = new https.Agent({
 
 // Create axios instance with defaults
 const axiosInstance = axios.create({
-    timeout: 60000, // 60 second timeout
+    timeout: 60000,
     httpsAgent: httpsAgent,
-    maxRedirects: 0, // Disable redirects
+    maxRedirects: 0,
     headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
         'Accept': 'application/json'
@@ -60,28 +59,27 @@ const axiosInstance = axios.create({
 // Configure view engine
 app.set('view engine', 'ejs');
 
-// Configure session middleware with a strong secret
+// Configure session middleware
 app.use(session({
     secret: 'your-secure-random-secret-1234567890', // Replace with a strong secret
     resave: false,
     saveUninitialized: false
 }));
 
-// Increase default max listeners to prevent warning
+// Increase default max listeners
 require('events').EventEmitter.defaultMaxListeners = 15;
 
-let client;
-// Initialize OpenID Client
 // Global configuration
 const region = 'us-east-1';
 const userPoolId = 'us-east-1_bVbdGpdWd';
 const cognitoDomain = 'https://us-east-1bvbdgpdwd.auth.us-east-1.amazoncognito.com';
 
+let client;
+
+// Initialize OpenID Client
 async function initializeClient() {
     try {
         console.log('Setting up OpenID Client with manual configuration...');
-
-        // Manually create the issuer with Cognito endpoints
         const issuer = new Issuer({
             issuer: `https://cognito-idp.${region}.amazonaws.com/${userPoolId}`,
             authorization_endpoint: `${cognitoDomain}/oauth2/authorize`,
@@ -104,7 +102,7 @@ async function initializeClient() {
             token_endpoint_auth_method: 'client_secret_post',
             http_options: {
                 timeout: 30000,
-                retry: 2 
+                retry: 2
             }
         });
 
@@ -128,9 +126,6 @@ const verifyToken = async (req, res, next) => {
         if (!authHeader) {
             return res.status(401).json({ error: 'No token provided' });
         }
-
-        // Token validation can be done using Cognito's JWKS
-        // For now, we'll just verify the token's presence
         req.user = { token: authHeader };
         next();
     } catch (error) {
@@ -162,15 +157,13 @@ app.get('/callback', async (req, res) => {
             throw new Error('OpenID client not initialized');
         }
 
-        // Verify state if it was stored in session
         if (req.session.state && params.state !== req.session.state) {
             throw new Error('State mismatch in callback');
         }
         console.log('Exchanging code for tokens...');
         const tokenEndpoint = `${cognitoDomain}/oauth2/token`;
-        // Create authorization header
         const basicAuth = Buffer.from(`${client.client_id}:${client.client_secret}`).toString('base64');
-        
+
         const tokenParams = new URLSearchParams({
             grant_type: 'authorization_code',
             code: params.code,
@@ -208,7 +201,6 @@ app.get('/callback', async (req, res) => {
         return res.redirect('/');
     } catch (err) {
         console.error('Callback error:', err);
-        
         let errorMessage = 'Authentication failed. ';
         if (axios.isAxiosError(err)) {
             console.error('Detailed Axios error:', {
@@ -237,7 +229,7 @@ app.get('/callback', async (req, res) => {
                 } catch (dnsErr) {
                     console.error('DNS resolution failed:', dnsErr);
                 }
-                errorMessage += 'Connection timed out. This might be due to network issues. Please check your connection and try again.';
+                errorMessage += 'Connection timed out. Please check your connection and try again.';
             } else if (err.response?.status === 401) {
                 errorMessage += 'Invalid client credentials. Please check your client ID and secret.';
             } else if (err.response?.data?.error_description) {
@@ -279,7 +271,6 @@ app.get('/login', (req, res) => {
 // Logout route
 app.get('/logout', (req, res) => {
     req.session.destroy(() => {
-        const cognitoDomain = 'us-east-1bvbdgpdwd.auth.us-east-1.amazoncognito.com'; 
         const logoutUrl = `https://${cognitoDomain}/logout?client_id=7mcc0trmggj5145u6jd1sg919a&logout_uri=http://localhost:3000`;
         res.redirect(logoutUrl);
     });
@@ -295,29 +286,38 @@ app.get('/upload', checkAuth, (req, res) => {
     });
 });
 
-// API endpoint for getting presigned URL
+// API endpoint for getting presigned URL and uploading file
 app.post('/api/presigned-url', verifyToken, upload.single('file'), async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ error: 'No file uploaded' });
         }
 
-        // Get the token from the request headers
         const token = req.headers.authorization;
 
-        // Get presigned URL for the file
         const result = await uploadFileWithPresignedUrl(
             req.file.originalname,
             req.file.path,
             token
         );
-        // Return the response
+
+        if (!result.success) {
+            throw new Error(result.message);
+        }
+
+        // Clean up temporary file
+        try {
+            await fs.unlink(req.file.path);
+            console.log('Temporary file deleted:', req.file.path);
+        } catch (unlinkError) {
+            console.error('Failed to delete temporary file:', unlinkError);
+        }
+
         return res.json({
             message: 'File uploaded successfully',
             uploadUrl: result.presignedUrl,
             data: result.response
         });
-
     } catch (error) {
         console.error('Upload error:', error);
         return res.status(500).json({
@@ -331,8 +331,8 @@ app.post('/api/presigned-url', verifyToken, upload.single('file'), async (req, r
 async function uploadFileWithPresignedUrl(fileName, filePath, token) {
     try {
         console.log('Getting presigned URL for:', fileName);
-        
-        // Step 1: Get presigned URL
+
+        // Step 1: Get presigned URL from API Gateway
         const presignedUrlResponse = await axios.post(
             'https://brz8v7rkb1.execute-api.us-east-1.amazonaws.com/dev/',
             {
@@ -347,7 +347,7 @@ async function uploadFileWithPresignedUrl(fileName, filePath, token) {
         );
 
         if (presignedUrlResponse.status !== 200) {
-            throw new Error('Failed to get presigned URL');
+            throw new Error(`Failed to get presigned URL: ${presignedUrlResponse.status}`);
         }
 
         // Parse the response body
@@ -359,28 +359,45 @@ async function uploadFileWithPresignedUrl(fileName, filePath, token) {
         if (!uploadUrl) {
             throw new Error('No upload URL in response');
         }
+
+        // Log URL query parameters for debugging
+        const urlObj = new URL(uploadUrl);
+        console.log('Presigned URL query params:', Object.fromEntries(urlObj.searchParams));
+
         // Step 2: Upload file to S3
         if (filePath) {
             const absoluteFilePath = path.resolve(filePath);
             console.log('Reading file from (relative path):', filePath);
-            console.log('Reading file from (absolute path):', absoluteFilePath);            // Read file as buffer
-            const fileBuffer = await fs.promises.readFile(filePath);
-            axios.put(uploadUrl, absoluteFilePath, {
-            headers: {
-                'Content-Type': 'video/mp4', 
-            },
-            maxBodyLength: Infinity,
-            maxContentLength: Infinity,
-            }).then((res) => {
-            console.log('Upload successful:', res.status);
-            }).catch((err) => {
-            console.error('Upload failed:', err.response?.status, err.response?.data || err.message);
-            });
+            console.log('Reading file from (absolute path):', absoluteFilePath);
+            const fileBuffer = await fs.readFile(absoluteFilePath);
 
-            // if (uploadResponse.status !== 200) {
-            //     console.error('Upload failed with status:', uploadResponse.status, 'Response:', uploadResponse.data);
-            //     throw new Error(`Upload failed with status ${uploadResponse.status}: ${uploadResponse.data}`);
-            // }
+            // Try with video/mp4 first
+            let uploadResponse;
+            try {
+                uploadResponse = await axios.put(uploadUrl, fileBuffer, {
+                    headers: {
+                        'Content-Type': 'video/mp4' // Primary attempt
+                    },
+                    maxBodyLength: Infinity,
+                    maxContentLength: Infinity
+                });
+            } catch (err) {
+                console.error('Upload attempt with video/mp4 failed:', err.response?.data || err.message);
+                // Fallback to application/octet-stream
+                console.log('Retrying with Content-Type: application/octet-stream');
+                uploadResponse = await axios.put(uploadUrl, fileBuffer, {
+                    headers: {
+                        'Content-Type': 'application/octet-stream' // Fallback
+                    },
+                    maxBodyLength: Infinity,
+                    maxContentLength: Infinity
+                });
+            }
+
+            if (uploadResponse.status !== 200) {
+                console.error('Upload failed with status:', uploadResponse.status, 'Response:', uploadResponse.data);
+                throw new Error(`Upload failed with status ${uploadResponse.status}`);
+            }
 
             console.log('File uploaded successfully');
             return {
@@ -391,14 +408,12 @@ async function uploadFileWithPresignedUrl(fileName, filePath, token) {
             };
         }
 
-        // If no filePath, just return the presigned URL
         return {
             success: true,
             message: 'Presigned URL generated successfully',
             presignedUrl: uploadUrl,
             response: null
         };
-
     } catch (error) {
         console.error('Error in uploadFileWithPresignedUrl:', error);
         if (error.response) {
@@ -417,7 +432,7 @@ async function uploadFileWithPresignedUrl(fileName, filePath, token) {
     }
 }
 
-// Start server after initializing the client
+// Start server
 const port = 3000;
 initializeClient()
     .then(() => {

@@ -17,6 +17,97 @@
             <a href="/upload" style="display: inline-block; background-color: #0066cc; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; margin-right: 10px;">Upload Files</a>
             <a href="/logout" style="display: inline-block; background-color: #dc3545; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">Logout</a>
         </div>
+
+        <!-- Video Player Section -->
+        <div style="margin-top: 30px;">
+            <h2>ABR Video Streaming</h2>
+            <div style="margin: 15px 0;">
+                <div style="margin-bottom: 10px;">
+                    <label for="quality">Video Quality:</label>
+                    <select id="quality" style="padding: 5px; margin-left: 10px;">
+                        <option value="-1">Auto</option>
+                        <option value="2">720p</option>
+                        <option value="1">520p</option>
+                        <option value="0">360p</option>
+                    </select>
+                </div>
+                <div id="currentQuality" style="font-size: 14px; color: #666;">Current Quality: Auto</div>
+            </div>
+            <video id="video" controls style="width: 100%; max-width: 800px;"></video>
+        </div>
+
+        <!-- Video Player Script -->
+        <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const video = document.getElementById('video');
+                const qualitySelect = document.getElementById('quality');
+                const currentQualityDisplay = document.getElementById('currentQuality');
+                const videoSrc = "https://dd4774af4e38d30b429d90c068785843.egress.mediapackage-vod.us-east-1.amazonaws.com/out/v1/22082ae1d56b456aa228da696177514c/6a99f803f98a4ae39c694f8f8900cf28/cb7dd1e2d59344298627bbbc9ee3758a/index.m3u8";
+                let hls;
+
+                if (Hls.isSupported()) {
+                    hls = new Hls({
+                        debug: false,
+                        enableWorker: true,
+                        // Start with automatic quality selection
+                        startLevel: -1,
+                        capLevelToPlayerSize: true
+                    });
+
+                    // Load the video source
+                    hls.loadSource(videoSrc);
+                    hls.attachMedia(video);
+
+                    // Handle quality selection
+                    hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
+                        console.log('HLS manifest parsed, ready to play');
+                        
+                        // Update quality selector with available levels
+                        const levels = hls.levels;
+                        console.log('Available qualities:', levels);
+
+                        // Handle quality changes
+                        qualitySelect.addEventListener('change', (e) => {
+                            const selectedLevel = parseInt(e.target.value);
+                            hls.currentLevel = selectedLevel;
+                            currentQualityDisplay.textContent = `Current Quality: ${selectedLevel === -1 ? 'Auto' : levels[selectedLevel].height + 'p'}`;
+                        });
+                    });
+
+                    // Monitor quality changes
+                    hls.on(Hls.Events.LEVEL_SWITCHED, (event, data) => {
+                        const currentLevel = hls.levels[data.level];
+                        if (currentLevel) {
+                            const quality = currentLevel.height + 'p';
+                            console.log('Quality changed to:', quality);
+                            if (hls.autoLevelEnabled) {
+                                currentQualityDisplay.textContent = `Current Quality: Auto (${quality})`;
+                            } else {
+                                currentQualityDisplay.textContent = `Current Quality: ${quality}`;
+                            }
+                        }
+                    });
+
+                    hls.on(Hls.Events.ERROR, function(event, data) {
+                        console.error('HLS error:', data);
+                    });
+                } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                    // For Safari and iOS devices
+                    video.src = videoSrc;
+                    video.addEventListener('loadedmetadata', () => {
+                        console.log('Native HLS support, ready to play');
+                    });
+                    // Hide quality selector for Safari as it handles ABR internally
+                    qualitySelect.style.display = 'none';
+                    currentQualityDisplay.style.display = 'none';
+                } else {
+                    console.error('HLS is not supported in this browser');
+                    qualitySelect.style.display = 'none';
+                    currentQualityDisplay.style.display = 'none';
+                }
+            });
+        </script>
     <% } else { %>
         <p>Please log in to continue</p>
         <a href="/login">Login</a>

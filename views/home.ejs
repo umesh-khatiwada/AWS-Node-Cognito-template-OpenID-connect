@@ -148,7 +148,7 @@
         <div class="header">
             <h1 class="welcome-text">
                 <% if (isAuthenticated) { %>
-                    Welcome back, <%= userInfo.username || userInfo.email %>
+                    Welcome back, <%= userInfo.email || userInfo.username %>
                 <% } else { %>
                     Video Management Platform
                 <% } %>

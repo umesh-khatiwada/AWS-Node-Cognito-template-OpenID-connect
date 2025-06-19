@@ -55,3 +55,13 @@ npm start
 
 ## Project Structure
 
+## Architecture
+
+![Architecture Diagram](./assets/mediaconvert.drawio.png)
+
+The above diagram illustrates the system architecture:
+- Authentication flow using AWS Cognito
+- File upload process through API Gateway and S3
+- Video processing with MediaConvert
+- Content delivery using CloudFront
+

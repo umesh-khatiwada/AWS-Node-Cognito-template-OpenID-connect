@@ -271,8 +271,8 @@ app.get('/login', (req, res) => {
 // Logout route
 app.get('/logout', (req, res) => {
     req.session.destroy(() => {
-        const encodedRedirectUri = encodeURIComponent('http://localhost:3000');
-        const logoutUrl = `${cognitoDomain}/oauth2/logout?client_id=7mcc0trmggj5145u6jd1sg919a&logout_uri=${encodedRedirectUri}&response_type=token`;
+        const redirectUri = 'http://localhost:3000';
+        const logoutUrl = `${cognitoDomain}/logout?client_id=7mcc0trmggj5145u6jd1sg919a&logout_uri=${encodeURIComponent(redirectUri)}`;
         res.redirect(logoutUrl);
     });
 });

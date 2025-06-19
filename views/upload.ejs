@@ -91,7 +91,9 @@
             const presignedResponse = await fetch('/api/presigned-url', {
                 method: 'POST',
                 headers: {
-                    'Authorization': 'Bearer <%= token %>'
+                    'Authorization': 'Bearer <%= token %>',
+                    'x-email-id': '<%= email %>',
+                    'X-sub-id': '<%= userId %>'
                 },
                 body: formData
             });

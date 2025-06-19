@@ -281,11 +281,17 @@ app.get('/upload', checkAuth, (req, res) => {
     if (!req.isAuthenticated) {
         return res.redirect('/login');
     }
+    
+    
+    console.log('Rendering upload page with user info:', req.session);
+
+
     res.render('upload', {
-        token: req.session.tokenSet?.id_token || ''
+        token: req.session.tokenSet?.id_token || '',
+        email: req.session.userInfo?.email || '',
+        userId: req.session.userInfo?.sub || ''
     });
 });
-
 // API endpoint for getting presigned URL and uploading file
 app.post('/api/presigned-url', verifyToken, upload.single('file'), async (req, res) => {
     try {
@@ -294,11 +300,18 @@ app.post('/api/presigned-url', verifyToken, upload.single('file'), async (req, r
         }
 
         const token = req.headers.authorization;
+        console.log('Received token:', req.headers);
+        const email = req.headers['x-email-id'];
+        const userId = req.headers['x-sub-id'];
+
+        console.log('Received userId:', userId);
 
         const result = await uploadFileWithPresignedUrl(
             req.file.originalname,
             req.file.path,
-            token
+            token,
+            email,
+            userId
         );
 
         if (!result.success) {
@@ -328,7 +341,7 @@ app.post('/api/presigned-url', verifyToken, upload.single('file'), async (req, r
 });
 
 // Utility function for file uploads
-async function uploadFileWithPresignedUrl(fileName, filePath, token) {
+async function uploadFileWithPresignedUrl(fileName, filePath, token,email, userId) {
     try {
         console.log('Getting presigned URL for:', fileName);
 
@@ -381,6 +394,37 @@ async function uploadFileWithPresignedUrl(fileName, filePath, token) {
                     maxBodyLength: Infinity,
                     maxContentLength: Infinity
                 });
+                console.log('Upload attempt with video/mp4 succeeded');
+                
+                // After successful upload (status code 200)
+                if (uploadResponse.status === 200) {
+                    const postUrl = `https://brz8v7rkb1.execute-api.us-east-1.amazonaws.com/dev/${uploadResponse.data.id}`;
+
+                    const postPayload = {
+                        Item: {
+                            fileName: fileName,
+                            userId: userId,
+                            userEmail: email
+                        }
+                    };
+                    
+                    try {
+                        const postResponse = await axios.post(postUrl, postPayload,{
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': token
+                            }
+                        });
+                        if (postResponse.status === 200) {
+                            console.log("Post-upload request successful");
+                        } else {
+                            console.warn("Post-upload request failed with status code:", postResponse.status);
+                        }
+                    } catch (postError) {
+                        console.error("Error making post-upload request:", postError.message);
+                    }
+                }
+                
             } catch (err) {
                 console.error('Upload attempt with video/mp4 failed:', err.response?.data || err.message);
                 // Fallback to application/octet-stream
@@ -431,6 +475,32 @@ async function uploadFileWithPresignedUrl(fileName, filePath, token) {
         };
     }
 }
+
+// Add this new route before the server start
+app.get('/api/videos/:userId', checkAuth, async (req, res) => {
+    try {
+        if (!req.session.tokenSet?.id_token) {
+            return res.status(401).json({ error: 'No authentication token available' });
+        }
+
+        const response = await axios.get(
+            `https://brz8v7rkb1.execute-api.us-east-1.amazonaws.com/dev/${req.params.userId}`,
+            {
+                headers: {
+                    'Authorization': req.session.tokenSet.id_token,
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+        res.json(response.data);
+    } catch (error) {
+        console.error('Error fetching videos:', error.response?.data || error.message);
+        res.status(error.response?.status || 500).json({ 
+            error: 'Failed to fetch videos',
+            details: error.response?.data?.message || error.message
+        });
+    }
+});
 
 // Start server
 const port = 3000;

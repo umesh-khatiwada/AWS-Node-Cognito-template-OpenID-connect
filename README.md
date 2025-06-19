@@ -1,30 +1,43 @@
 # AWS-Node-Cognito-template-OpenID-connect
 
-A robust Node.js application template demonstrating AWS Cognito integration with OpenID Connect for authentication and video upload/streaming capabilities.
+A secure video processing and streaming platform using AWS services with Cognito authentication.
+
+## Architecture
+![Architecture Diagram](./assets/mediaconvert.drawio.png)
 
 ## Features
 
-- 🔐 AWS Cognito Authentication using OpenID Connect
-- 📹 Video Upload to S3
-- 🎥 Video Streaming with HLS
-- 🎨 Modern UI with responsive design
-- 🚀 Express.js backend
-- 🔄 Session Management
-- 📱 Mobile-friendly interface
+- 🔒 Secure Authentication with AWS Cognito OpenID Connect
+- 📹 Video Upload & Processing
+- 🎥 Adaptive Bitrate Streaming (HLS)
+- 🎮 Quality Selection Controls
+- 📱 Responsive Design
+- 🚀 Scalable Architecture
 
 ## Prerequisites
 
 - Node.js >= 18.0.0
-- AWS Account
-- AWS Cognito User Pool
-- AWS S3 Bucket
-- AWS API Gateway setup
+- AWS Account with configured services:
+  - Cognito User Pool
+  - S3 Bucket
+  - MediaConvert
+  - MediaPackage
+  - DynamoDB
+  - Lambda
+  - API Gateway
 
-## Environment Variables
+## Quick Start
 
-Create a `.env` file in the root directory:
+1. Clone and Install:
+```bash
+git clone [repository-url]
+cd cognition
+npm install
+```
 
-```plaintext
+2. Configure Environment:
+Create `.env` file in root directory:
+```env
 AWS_ACCESS_KEY_ID=your_aws_access_key
 AWS_SECRET_ACCESS_KEY=your_aws_secret_key
 AWS_REGION=us-east-1
@@ -37,31 +50,9 @@ API_GATEWAY_URL=your_api_gateway_url
 PORT=3000
 ```
 
-## Installation
-
+3. Start Server:
 ```bash
-# Clone the repository
-git clone [repository-url]
-
-# Install dependencies
-npm install
-
-# Create uploads directory
-mkdir uploads
-
-# Start the server
 npm start
 ```
 
 ## Project Structure
-
-## Architecture
-
-![Architecture Diagram](./assets/mediaconvert.drawio.png)
-
-The above diagram illustrates the system architecture:
-- Authentication flow using AWS Cognito
-- File upload process through API Gateway and S3
-- Video processing with MediaConvert
-- Content delivery using CloudFront
-

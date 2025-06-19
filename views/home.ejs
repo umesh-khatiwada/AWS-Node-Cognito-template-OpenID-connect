@@ -3,148 +3,282 @@
 <head>
     <title>Amazon Cognito authentication with Node example</title>
     <style>
-        .video-container {
-            margin: 20px 0;
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f2f5;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
             padding: 20px;
-            background: #f8f9fa;
+        }
+        .header {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .welcome-text {
+            color: #1a73e8;
+            margin: 0;
+            font-size: 24px;
+            font-weight: 500;
+        }
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin: 20px 0;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            padding: 12px 24px;
             border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+            border: none;
+        }
+        .btn-primary {
+            background-color: #1a73e8;
+            color: white;
+        }
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 24px;
+            padding: 20px 0;
         }
         .video-item {
-            margin-bottom: 30px;
-            padding: 15px;
             background: white;
-            border-radius: 6px;
+            border-radius: 12px;
+            overflow: hidden;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
         }
-        .video-controls {
-            margin: 10px 0;
+        .video-item:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.1);
         }
-        .quality-selector {
-            padding: 5px;
-            margin-right: 10px;
+        .video-content {
+            padding: 16px;
         }
         .video-title {
-            font-size: 18px;
-            margin-bottom: 10px;
+            font-size: 16px;
+            font-weight: 500;
+            color: #1a73e8;
+            margin-bottom: 12px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .video-player {
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: #000;
+            border-radius: 8px 8px 0 0;
+        }
+        .video-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-top: 1px solid #eee;
+        }
+        .quality-selector {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+            color: #444;
+            font-size: 14px;
+        }
+        .quality-info {
+            color: #666;
+            font-size: 14px;
+        }
+        .login-prompt {
+            text-align: center;
+            padding: 40px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .section-title {
+            color: #1a73e8;
+            margin: 0 0 20px 0;
+            font-size: 20px;
+            font-weight: 500;
+        }
+        .no-videos {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            background: white;
+            border-radius: 12px;
+            font-size: 16px;
+        }
+        .error-message {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 16px;
+            border-radius: 8px;
+            margin: 20px 0;
         }
     </style>
 </head>
 <body>
-<div>
-    <h1>Amazon Cognito User Pool Demo</h1>
-
-    <% if (isAuthenticated) { %>
-        <div>
-            <h2>Welcome, <%= userInfo.username || userInfo.email %></h2>
+    <div class="container">
+        <div class="header">
+            <h1 class="welcome-text">
+                <% if (isAuthenticated) { %>
+                    Welcome back, <%= userInfo.username || userInfo.email %>
+                <% } else { %>
+                    Video Management Platform
+                <% } %>
+            </h1>
+            <% if (isAuthenticated) { %>
+                <div class="button-group">
+                    <a href="/upload" class="btn btn-primary">Upload New Video</a>
+                    <a href="/logout" class="btn btn-danger">Sign Out</a>
+                </div>
+            <% } %>
         </div>
-        <div style="margin: 20px 0;">
-            <a href="/upload" style="display: inline-block; background-color: #0066cc; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; margin-right: 10px;">Upload Files</a>
-            <a href="/logout" style="display: inline-block; background-color: #dc3545; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">Logout</a>
-        </div>
 
-        <!-- Video List Section -->
-        <div id="videoList" class="video-container">
-            <h2>Your Videos</h2>
-            <div id="videoItems"></div>
-        </div>
+        <% if (isAuthenticated) { %>
+            <div id="videoList">
+                <h2 class="section-title">Your Videos</h2>
+                <div id="videoItems" class="video-grid"></div>
+            </div>
 
-        <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-        <script>
-            async function fetchVideos() {
-                try {
-                    const userId = '<%= userInfo.sub %>';
-                    const response = await fetch(`/api/videos/${userId}`);
-                    if (!response.ok) {
-                        throw new Error('Failed to fetch videos');
+            <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+            <script>
+                async function fetchVideos() {
+                    try {
+                        const userId = '<%= userInfo.sub %>';
+                        const response = await fetch(`/api/videos/${userId}`);
+                        if (!response.ok) {
+                            throw new Error('Failed to fetch videos');
+                        }
+                        const videos = await response.json();
+                        displayVideos(videos);
+                    } catch (error) {
+                        console.error('Error fetching videos:', error);
+                        document.getElementById('videoItems').innerHTML = `
+                            <div class="error-message" style="color: red; padding: 20px;">
+                                Failed to load videos. Please try again later.
+                            </div>`;
                     }
-                    const videos = await response.json();
-                    displayVideos(videos);
-                } catch (error) {
-                    console.error('Error fetching videos:', error);
-                    document.getElementById('videoItems').innerHTML = `
-                        <div class="error-message" style="color: red; padding: 20px;">
-                            Failed to load videos. Please try again later.
-                        </div>`;
                 }
-            }
 
-            function displayVideos(videos) {
-                const container = document.getElementById('videoItems');
-                container.innerHTML = videos.map((video, index) => `
-                    <div class="video-item">
-                        <div class="video-title">${video.fileName}</div>
-                        <div class="video-controls">
-                            <select id="quality-${index}" class="quality-selector" onchange="changeQuality(${index})">
-                                <option value="auto">Auto</option>
-                                <option value="720p">720p</option>
-                                <option value="360p">360p</option>
-                            </select>
-                            <span id="current-quality-${index}">Current Quality: Auto</span>
+                function displayVideos(videos) {
+                    const container = document.getElementById('videoItems');
+                    if (!videos || videos.length === 0) {
+                        container.innerHTML = '<p>No videos available.</p>';
+                        return;
+                    }
+
+                    container.innerHTML = videos.map((video, index) => `
+                        <div class="video-item">
+                            <div class="video-title">${video.fileName}</div>
+                            <div class="video-controls">
+                                <select id="quality-${index}" class="quality-selector" onchange="changeQuality(${index})">
+                                    <option value="auto">Auto</option>
+                                    <option value="720p">720p</option>
+                                    <option value="360p">360p</option>
+                                </select>
+                                <span id="current-quality-${index}">Current Quality: Auto</span>
+                            </div>
+                            <video id="video-${index}" controls style="width: 100%; max-width: 800px;"></video>
                         </div>
-                        <video id="video-${index}" controls style="width: 100%; max-width: 800px;"></video>
-                    </div>
-                `).join('');
+                    `).join('');
 
-                videos.forEach((video, index) => {
-                    initializeVideo(video.playbackUrls[0], index);
-                });
-            }
-
-            function initializeVideo(playbackUrl, index) {
-                const video = document.getElementById(`video-${index}`);
-                if (Hls.isSupported()) {
-                    const hls = new Hls({
-                        startLevel: -1,
-                        capLevelToPlayerSize: true
-                    });
-
-                    hls.loadSource(playbackUrl);
-                    hls.attachMedia(video);
-
-                    hls.on(Hls.Events.LEVEL_SWITCHED, (event, data) => {
-                        const currentLevel = hls.levels[data.level];
-                        if (currentLevel) {
-                            const quality = currentLevel.height + 'p';
-                            document.getElementById(`current-quality-${index}`).textContent = 
-                                `Current Quality: ${hls.autoLevelEnabled ? 'Auto (' + quality + ')' : quality}`;
+                    videos.forEach((video, index) => {
+                        if (video.playbackUrls && video.playbackUrls.length > 0) {
+                            initializeVideo(video.playbackUrls[0], index);
+                        } else {
+                            document.getElementById(`video-${index}`).innerHTML = 
+                                '<p style="color: #666; text-align: center;">Video playback not available</p>';
+                            document.getElementById(`quality-${index}`).style.display = 'none';
+                            document.getElementById(`current-quality-${index}`).style.display = 'none';
                         }
                     });
-
-                    // Store hls instance for quality changes
-                    video.hlsInstance = hls;
-                } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-                    video.src = playbackUrl;
-                    // Hide quality controls for native HLS support
-                    document.getElementById(`quality-${index}`).style.display = 'none';
-                    document.getElementById(`current-quality-${index}`).style.display = 'none';
                 }
-            }
 
-            function changeQuality(index) {
-                const video = document.getElementById(`video-${index}`);
-                const quality = document.getElementById(`quality-${index}`).value;
-                const hls = video.hlsInstance;
+                function initializeVideo(playbackUrl, index) {
+                    const video = document.getElementById(`video-${index}`);
+                    if (Hls.isSupported()) {
+                        const hls = new Hls({
+                            startLevel: -1,
+                            capLevelToPlayerSize: true
+                        });
 
-                if (hls) {
-                    if (quality === 'auto') {
-                        hls.currentLevel = -1;
-                    } else {
-                        const level = hls.levels.findIndex(level => 
-                            level.height === parseInt(quality));
-                        if (level !== -1) {
-                            hls.currentLevel = level;
+                        hls.loadSource(playbackUrl);
+                        hls.attachMedia(video);
+
+                        hls.on(Hls.Events.LEVEL_SWITCHED, (event, data) => {
+                            const currentLevel = hls.levels[data.level];
+                            if (currentLevel) {
+                                const quality = currentLevel.height + 'p';
+                                document.getElementById(`current-quality-${index}`).textContent = 
+                                    `Current Quality: ${hls.autoLevelEnabled ? 'Auto (' + quality + ')' : quality}`;
+                            }
+                        });
+
+                        // Store hls instance for quality changes
+                        video.hlsInstance = hls;
+                    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                        video.src = playbackUrl;
+                        // Hide quality controls for native HLS support
+                        document.getElementById(`quality-${index}`).style.display = 'none';
+                        document.getElementById(`current-quality-${index}`).style.display = 'none';
+                    }
+                }
+
+                function changeQuality(index) {
+                    const video = document.getElementById(`video-${index}`);
+                    const quality = document.getElementById(`quality-${index}`).value;
+                    const hls = video.hlsInstance;
+
+                    if (hls) {
+                        if (quality === 'auto') {
+                            hls.currentLevel = -1;
+                        } else {
+                            const level = hls.levels.findIndex(level => 
+                                level.height === parseInt(quality));
+                            if (level !== -1) {
+                                hls.currentLevel = level;
+                            }
                         }
                     }
                 }
-            }
 
-            // Fetch videos when page loads
-            document.addEventListener('DOMContentLoaded', fetchVideos);
-        </script>
-    <% } else { %>
-        <p>Please log in to continue</p>
-        <a href="/login">Login</a>
-    <% } %>
-</div>
+                // Fetch videos when page loads
+                document.addEventListener('DOMContentLoaded', fetchVideos);
+            </script>
+        <% } else { %>
+            <div class="login-prompt">
+                <h2>Welcome to Video Management Platform</h2>
+                <p style="color: #666; margin: 20px 0;">Please sign in to manage and view your videos</p>
+                <a href="/login" class="btn btn-primary">Sign In</a>
+            </div>
+        <% } %>
+    </div>
 </body>
 </html>

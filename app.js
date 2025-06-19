@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
 const { Issuer, generators } = require('openid-client');
@@ -25,7 +26,7 @@ const upload = multer({ storage: storage });
 
 // AWS Configuration (not used for presigned URL but kept for potential use)
 const s3Client = new S3Client({
-    region: 'us-east-1',
+    region: process.env.AWS_REGION,
     credentials: {
         accessKeyId: process.env.AWS_ACCESS_KEY_ID,
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
@@ -61,7 +62,7 @@ app.set('view engine', 'ejs');
 
 // Configure session middleware
 app.use(session({
-    secret: 'your-secure-random-secret-1234567890', // Replace with a strong secret
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false
 }));
@@ -70,9 +71,9 @@ app.use(session({
 require('events').EventEmitter.defaultMaxListeners = 15;
 
 // Global configuration
-const region = 'us-east-1';
-const userPoolId = 'us-east-1_bVbdGpdWd';
-const cognitoDomain = 'https://us-east-1bvbdgpdwd.auth.us-east-1.amazoncognito.com';
+const region = process.env.AWS_REGION;
+const userPoolId = process.env.COGNITO_USER_POOL_ID;
+const cognitoDomain = process.env.COGNITO_DOMAIN;
 
 let client;
 
@@ -95,8 +96,8 @@ async function initializeClient() {
         console.log('Successfully configured issuer');
 
         client = new issuer.Client({
-            client_id: '7mcc0trmggj5145u6jd1sg919a',
-            client_secret: '19a622dctb4ibb8evppl6rp4rga41ho3qk0qu9elnl4on9ksu2bb',
+            client_id: process.env.COGNITO_CLIENT_ID,
+            client_secret: process.env.COGNITO_CLIENT_SECRET,
             redirect_uris: ['http://localhost:3000/callback'],
             response_types: ['code'],
             token_endpoint_auth_method: 'client_secret_post',
@@ -348,7 +349,7 @@ async function uploadFileWithPresignedUrl(fileName, filePath, token,email, userI
 
         // Step 1: Get presigned URL from API Gateway
         const presignedUrlResponse = await axios.post(
-            'https://brz8v7rkb1.execute-api.us-east-1.amazonaws.com/dev/',
+            `${process.env.API_GATEWAY_URL}/`,
             {
                 body: JSON.stringify({ file_name: fileName })
             },
@@ -504,7 +505,7 @@ app.get('/api/videos/:userId', checkAuth, async (req, res) => {
 });
 
 // Start server
-const port = 3000;
+const port = process.env.PORT || 3000;
 initializeClient()
     .then(() => {
         app.listen(port, () => {

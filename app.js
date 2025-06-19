@@ -85,7 +85,7 @@ async function initializeClient() {
             authorization_endpoint: `${cognitoDomain}/oauth2/authorize`,
             token_endpoint: `${cognitoDomain}/oauth2/token`,
             userinfo_endpoint: `${cognitoDomain}/oauth2/userInfo`,
-            end_session_endpoint: `${cognitoDomain}/logout`,
+            end_session_endpoint: `https://${cognitoDomain}/logout`,
             jwks_uri: `https://cognito-idp.${region}.amazonaws.com/${userPoolId}/.well-known/jwks.json`,
             token_endpoint_auth_methods_supported: ['client_secret_basic', 'client_secret_post'],
             grant_types_supported: ['authorization_code', 'refresh_token'],
@@ -271,7 +271,8 @@ app.get('/login', (req, res) => {
 // Logout route
 app.get('/logout', (req, res) => {
     req.session.destroy(() => {
-        const logoutUrl = `https://${cognitoDomain}/logout?client_id=7mcc0trmggj5145u6jd1sg919a&logout_uri=http://localhost:3000`;
+        const encodedRedirectUri = encodeURIComponent('http://localhost:3000');
+        const logoutUrl = `${cognitoDomain}/oauth2/logout?client_id=7mcc0trmggj5145u6jd1sg919a&logout_uri=${encodedRedirectUri}&response_type=token`;
         res.redirect(logoutUrl);
     });
 });

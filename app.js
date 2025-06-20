@@ -92,13 +92,14 @@ async function initializeClient() {
             grant_types_supported: ['authorization_code', 'refresh_token'],
             response_types_supported: ['code']
         });
+        redirect_uri = `${process.env.REDIRECT_UR}/callback`;
 
         console.log('Successfully configured issuer');
 
         client = new issuer.Client({
             client_id: process.env.COGNITO_CLIENT_ID,
             client_secret: process.env.COGNITO_CLIENT_SECRET,
-            redirect_uris: ['http://localhost:3000/callback'],
+            redirect_uris: [redirect_uri],
             response_types: ['code'],
             token_endpoint_auth_method: 'client_secret_post',
             http_options: {
@@ -164,12 +165,12 @@ app.get('/callback', async (req, res) => {
         console.log('Exchanging code for tokens...');
         const tokenEndpoint = `${cognitoDomain}/oauth2/token`;
         const basicAuth = Buffer.from(`${client.client_id}:${client.client_secret}`).toString('base64');
-
+      redirect_uri = `${process.env.REDIRECT_UR}/callback`;
         const tokenParams = new URLSearchParams({
             grant_type: 'authorization_code',
             code: params.code,
             client_id: client.client_id,
-            redirect_uri: 'http://localhost:3000/callback'
+            redirect_uri: redirect_uri
         }).toString();
 
         console.log('Making token request to:', tokenEndpoint);
@@ -271,8 +272,9 @@ app.get('/login', (req, res) => {
 
 // Logout route
 app.get('/logout', (req, res) => {
+        redirect_uri = `${process.env.REDIRECT_UR}`;
     req.session.destroy(() => {
-        const redirectUri = 'http://localhost:3000';
+        const redirectUri = redirect_uri;
         const logoutUrl = `${cognitoDomain}/logout?client_id=7mcc0trmggj5145u6jd1sg919a&logout_uri=${encodeURIComponent(redirectUri)}`;
         res.redirect(logoutUrl);
     });

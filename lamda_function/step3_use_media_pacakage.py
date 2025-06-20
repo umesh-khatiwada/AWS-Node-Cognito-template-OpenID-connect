@@ -12,7 +12,7 @@ def lambda_handler(event, context):
     try:
         packaging_group_id = os.environ.get('PACKAGING_GROUP_ID')
         source_role_arn = os.environ.get('SOURCE_ROLE_ARN')
-        dynamodb_table = os.environ.get('DYNAMODB_TABLE', 'horyzon-db-table')
+        dynamodb_table = os.environ.get('DYNAMODB_TABLE', 'db-table')
 
         if not packaging_group_id or not source_role_arn:
             raise Exception("Environment variables PACKAGING_GROUP_ID or SOURCE_ROLE_ARN are not set.")

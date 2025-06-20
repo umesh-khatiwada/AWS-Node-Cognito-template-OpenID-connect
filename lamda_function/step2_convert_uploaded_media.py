@@ -45,7 +45,7 @@ def handler(event, context):
     destinationS3 = f's3://{os.environ["DestinationBucket"]}'
     mediaConvertRole = os.environ['MediaConvertRole']
     region = os.environ['AWS_DEFAULT_REGION']
-    dynamodb_table_name = os.environ.get('DynamoDBTable', 'horyzon-db-table')
+    dynamodb_table_name = os.environ.get('DynamoDBTable', 'db-table')
 
     sourceS3 = f's3://{sourceS3Bucket}/{sourceS3Key}'
     sourceS3Basename = os.path.splitext(os.path.basename(sourceS3))[0]

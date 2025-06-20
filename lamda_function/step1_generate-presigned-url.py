@@ -4,7 +4,7 @@ import os
 
 # Initialize S3 client with explicit region
 s3 = boto3.client('s3', region_name='us-east-1')
-BUCKET_NAME = os.environ.get('BUCKET_NAME', 'horyzon-input-np')  # Default to bucket name if not set
+BUCKET_NAME = os.environ.get('BUCKET_NAME', 'input-np')  # Default to bucket name if not set
 
 def lambda_handler(event, context):
     # Check if body exists

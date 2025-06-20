@@ -3,7 +3,7 @@ import json
 import boto3
 
 dynamodb = boto3.resource('dynamodb')
-table = dynamodb.Table('horyzon-db-table')
+table = dynamodb.Table('db-table')
 
 def lambda_handler(event, context):
     user_id = event.get('pathParameters', {}).get('user-id')

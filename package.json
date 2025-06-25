@@ -1,7 +1,7 @@
 {
-  "name": "aws-node-cognito-template-openid-connect",
+  "name": "aws-video-management-platform",
   "version": "1.0.0",
-  "description": "A Node.js application template demonstrating AWS Cognito integration with OpenID Connect for authentication and video upload/streaming capabilities.",
+  "description": "A comprehensive video management platform built with AWS Cognito authentication, S3 storage, and professional streaming capabilities.",
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
@@ -11,13 +11,15 @@
   "keywords": [
     "aws",
     "cognito",
-    "openid-connect",
-    "video",
-    "streaming",
+    "video-streaming",
+    "s3",
+    "lambda",
+    "mediaconvert",
     "nodejs",
-    "express"
+    "express",
+    "video-management"
   ],
-  "author": "Your Name",
+  "author": "Video Management Team",
   "license": "MIT",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.828.0",
@@ -43,5 +45,13 @@
   },
   "engines": {
     "node": ">=18.0.0"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/video-management-platform.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-org/video-management-platform/issues"
+  },
+  "homepage": "https://github.com/your-org/video-management-platform#readme"
 }

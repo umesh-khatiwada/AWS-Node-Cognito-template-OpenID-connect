@@ -299,50 +299,8 @@
 }
 
 /* Enhanced Video.js Big Play Button */
-.video-js .vjs-big-play-button {
-    font-size: 3em;
-    line-height: 2;
-    height: 2em;
-    width: 2em;
-    border-radius: 50%;
-    background-color: rgba(229, 9, 20, 0.9) !important;
-    border: 3px solid white !important;
-    top: 50% !important;
-    left: 50% !important;
-    margin-top: -1em !important;
-    margin-left: -1em !important;
-    transition: all 0.3s ease !important;
-    z-index: 1000 !important;
-    pointer-events: auto !important;
-    cursor: pointer !important;
-    display: block !important;
-    opacity: 1 !important;
-}
-
-.video-js .vjs-big-play-button:hover {
-    background-color: #e50914 !important;
-    transform: scale(1.1) !important;
-    box-shadow: 0 0 20px rgba(229, 9, 20, 0.5) !important;
-}
-
-.video-js .vjs-big-play-button:focus {
-    outline: 2px solid white !important;
-    outline-offset: 4px !important;
-}
-
-.video-js .vjs-big-play-button .vjs-icon-placeholder:before {
-    color: white !important;
-    font-size: 1em !important;
-    line-height: 2 !important;
-}
 
 /* Ensure the big play button is always visible when needed */
-.video-js.vjs-paused .vjs-big-play-button,
-.video-js:not(.vjs-has-started) .vjs-big-play-button {
-    display: block !important;
-    opacity: 1 !important;
-    pointer-events: auto !important;
-}
 
 /* Mobile Optimizations */
 @media (max-width: 768px) {
@@ -357,14 +315,6 @@
 
     .video-js .vjs-progress-control {
         height: 6px;
-    }
-
-    .video-js .vjs-big-play-button {
-        font-size: 1.5em;
-        height: 1.5em;
-        width: 1.5em;
-        margin-top: -0.75em;
-        margin-left: -0.75em;
     }
 }
 
@@ -540,13 +490,6 @@
         height: 6px !important;
     }
 
-    .video-js .vjs-big-play-button {
-        font-size: 2em !important;
-        height: 1.5em !important;
-        width: 1.5em !important;
-        margin-top: -0.75em !important;
-        margin-left: -0.75em !important;
-    }
 }
 
 /* Touch device optimizations */
@@ -586,9 +529,6 @@
 
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
-    .video-js .vjs-big-play-button {
-        transition: none !important;
-    }
 
     .video-js .vjs-control-bar {
         transition: none !important;

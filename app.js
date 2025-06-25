@@ -487,6 +487,8 @@ app.get('/api/videos/:userId', checkAuth, async (req, res) => {
             return res.status(401).json({ error: 'No authentication token available' });
         }
 
+        console.log('Fetching videos for user:', req.params.userId);
+        
         const response = await axios.get(
             `https://brz8v7rkb1.execute-api.us-east-1.amazonaws.com/dev/${req.params.userId}`,
             {
@@ -496,7 +498,29 @@ app.get('/api/videos/:userId', checkAuth, async (req, res) => {
                 }
             }
         );
-        res.json(response.data);
+        
+        console.log('API Response:', JSON.stringify(response.data, null, 2));
+        
+        // Transform the response to ensure proper video data structure
+        let videos = response.data;
+        if (Array.isArray(videos)) {
+            videos = videos.map(video => {
+                // Ensure all necessary fields are present
+                return {
+                    id: video.id || video.videoId,
+                    fileName: video.fileName || video.filename || video.name,
+                    status: video.status || 'unknown',
+                    thumbnail: video.thumbnail || video.thumbnailUrl,
+                    playbackUrls: video.playbackUrls || video.streamingUrls || (video.videoUrl ? [video.videoUrl] : []),
+                    uploadedAt: video.uploadedAt || video.createdAt || new Date().toISOString(),
+                    userId: video.userId,
+                    userEmail: video.userEmail
+                };
+            });
+        }
+        
+        console.log('Transformed videos:', JSON.stringify(videos, null, 2));
+        res.json(videos);
     } catch (error) {
         console.error('Error fetching videos:', error.response?.data || error.message);
         res.status(error.response?.status || 500).json({ 

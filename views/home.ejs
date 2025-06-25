@@ -1,155 +1,375 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Amazon Cognito authentication with Node example</title>
+    <title>VideoHub - Your Video Library</title>
     <style>
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Netflix Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #f0f2f5;
+            background: #0f0f0f;
+            color: white;
             min-height: 100vh;
+            overflow-x: hidden;
         }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        .header {
-            background: white;
-            padding: 20px 30px;
-            border-radius: 12px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 24px;
+
+        /* Netflix-style Header */
+        .netflix-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, transparent 100%);
+            padding: 15px 4%;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            transition: all 0.3s ease;
         }
-        .welcome-text {
-            color: #1a73e8;
-            margin: 0;
-            font-size: 24px;
-            font-weight: 500;
+
+        .netflix-header.scrolled {
+            background: rgba(0,0,0,0.95);
+            backdrop-filter: blur(10px);
         }
-        .button-group {
+
+        .brand-logo {
             display: flex;
-            gap: 12px;
-            margin: 20px 0;
-        }
-        .btn {
-            display: inline-flex;
             align-items: center;
-            padding: 12px 24px;
+            gap: 12px;
+        }
+
+        .brand-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #e50914 0%, #f40612 100%);
             border-radius: 8px;
-            text-decoration: none;
-            font-weight: 500;
-            transition: all 0.2s;
-            border: none;
-        }
-        .btn-primary {
-            background-color: #1a73e8;
-            color: white;
-        }
-        .btn-danger {
-            background-color: #dc3545;
-            color: white;
-        }
-        .btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        .video-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 24px;
-            padding: 20px 0;
-        }
-        .video-item {
-            background: white;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            transition: transform 0.2s;
-        }
-        .video-item:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 6px 12px rgba(0,0,0,0.1);
-        }
-        .video-thumbnail {
-            width: 100%;
-            aspect-ratio: 16/9;
-            object-fit: cover;
-            background: #000;
-        }
-        .video-content {
-            padding: 16px;
-        }
-        .video-title {
-            font-size: 16px;
-            font-weight: 500;
-            color: #1a73e8;
-            margin-bottom: 12px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .video-status {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: 500;
-            margin-bottom: 12px;
-        }
-        .status-submitted {
-            background-color: #e0f2fe;
-            color: #0369a1;
-        }
-        .status-processing {
-            background-color: #fef3c7;
-            color: #d97706;
-        }
-        .status-completed {
-            background-color: #d1fae5;
-            color: #047857;
-        }
-        .play-button {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.7);
-            border: none;
-            border-radius: 50%;
-            width: 60px;
-            height: 60px;
-            cursor: pointer;
-            transition: all 0.2s;
             display: flex;
             align-items: center;
             justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
         }
-        .play-button:hover {
-            background: rgba(0,0,0,0.9);
-            transform: translate(-50%, -50%) scale(1.1);
+
+        .brand-text {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #e50914;
+            letter-spacing: -0.5px;
         }
-        .play-icon {
-            width: 0;
-            height: 0;
-            border-left: 20px solid white;
-            border-top: 12px solid transparent;
-            border-bottom: 12px solid transparent;
-            margin-left: 4px;
+
+        .nav-menu {
+            display: flex;
+            gap: 30px;
+            align-items: center;
         }
-        .thumbnail-container {
+
+        .nav-item {
+            color: #e5e5e5;
+            text-decoration: none;
+            font-weight: 400;
+            transition: color 0.2s ease;
             position: relative;
+        }
+
+        .nav-item:hover {
+            color: white;
+        }
+
+        .nav-item.active::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #e50914;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #e50914, #f40612);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .user-dropdown {
+            position: relative;
+        }
+
+        .dropdown-btn {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 8px 16px;
+            border-radius: 4px;
+            transition: background 0.2s ease;
+        }
+
+        .dropdown-btn:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        /* Hero Section */
+        .hero-section {
+            height: 80vh;
+            background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.7)), 
+                        url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600"><defs><linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:%23232F3E;stop-opacity:1" /><stop offset="50%" style="stop-color:%23146EB4;stop-opacity:1" /><stop offset="100%" style="stop-color:%23FF9900;stop-opacity:1" /></linearGradient></defs><rect width="1200" height="600" fill="url(%23grad1)" /></svg>');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: center;
+            padding: 0 4%;
+            margin-top: 70px;
+            position: relative;
+        }
+
+        .hero-content {
+            max-width: 600px;
+        }
+
+        .hero-title {
+            font-size: 3.5rem;
+            font-weight: 900;
+            margin-bottom: 20px;
+            line-height: 1.1;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        }
+
+        .hero-subtitle {
+            font-size: 1.4rem;
+            margin-bottom: 30px;
+            color: #e5e5e5;
+            line-height: 1.4;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn-hero {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-primary-hero {
+            background: white;
+            color: #0f0f0f;
+        }
+
+        .btn-primary-hero:hover {
+            background: rgba(255,255,255,0.8);
+            transform: scale(1.05);
+        }
+
+        .btn-secondary-hero {
+            background: rgba(109, 109, 110, 0.7);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+
+        .btn-secondary-hero:hover {
+            background: rgba(109, 109, 110, 0.9);
+            transform: scale(1.05);
+        }
+
+        /* Content Sections */
+        .content-wrapper {
+            padding: 0 4%;
+            margin-top: -100px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin: 50px 0 20px 0;
+            color: #e5e5e5;
+        }
+
+        /* Netflix-style Video Grid */
+        .video-carousel {
+            position: relative;
+            margin-bottom: 50px;
+        }
+
+        .video-row {
+            display: flex;
+            gap: 15px;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            padding: 10px 0;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .video-row::-webkit-scrollbar {
+            display: none;
+        }
+
+        .video-card {
+            min-width: 300px;
+            height: 170px;
+            background: #1a1a1a;
+            border-radius: 8px;
             overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            border: 2px solid transparent;
         }
-        .video-player {
+
+        .video-card:hover {
+            transform: scale(1.08);
+            z-index: 10;
+            border-color: rgba(255,255,255,0.3);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        }
+
+        .video-thumbnail {
             width: 100%;
-            aspect-ratio: 16/9;
-            background: #000;
+            height: 100%;
+            object-fit: cover;
+            transition: all 0.3s ease;
         }
+
+        .video-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(transparent 50%, rgba(0,0,0,0.8) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 15px;
+        }
+
+        .video-card:hover .video-overlay {
+            opacity: 1;
+        }
+
+        .video-info {
+            color: white;
+        }
+
+        .video-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+            line-height: 1.2;
+        }
+
+        .video-status {
+            font-size: 0.8rem;
+            padding: 3px 8px;
+            border-radius: 12px;
+            display: inline-block;
+            margin-bottom: 8px;
+        }
+
+        .status-completed {
+            background: #46d369;
+            color: white;
+        }
+
+        .status-processing {
+            background: #ff9500;
+            color: white;
+        }
+
+        .status-submitted {
+            background: #007aff;
+            color: white;
+        }
+
+        .video-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .action-btn {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.5);
+            background: rgba(42, 42, 42, 0.8);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .action-btn:hover {
+            background: white;
+            color: #0f0f0f;
+            transform: scale(1.1);
+        }
+
+        .play-btn {
+            background: white;
+            color: #0f0f0f;
+        }
+
+        .play-btn:hover {
+            transform: scale(1.2);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 100px 20px;
+            color: #737373;
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-title {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: #e5e5e5;
+        }
+
+        .empty-subtitle {
+            font-size: 1rem;
+            margin-bottom: 30px;
+        }
+
+        /* Video Modal */
         .video-modal {
             display: none;
             position: fixed;
@@ -157,47 +377,99 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.9);
-            z-index: 1000;
+            background: rgba(0,0,0,0.95);
+            z-index: 2000;
             justify-content: center;
             align-items: center;
         }
+
         .modal-content {
-            background: white;
+            background: #0f0f0f;
             border-radius: 8px;
-            padding: 20px;
+            overflow: hidden;
             max-width: 90vw;
             max-height: 90vh;
             position: relative;
         }
-        .close-modal {
+
+        .modal-header {
             position: absolute;
-            top: 10px;
-            right: 15px;
-            background: none;
+            top: 20px;
+            right: 20px;
+            z-index: 10;
+        }
+
+        .close-modal {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(42, 42, 42, 0.8);
             border: none;
-            font-size: 24px;
+            color: white;
+            font-size: 1.5rem;
             cursor: pointer;
-            color: #666;
+            transition: all 0.2s ease;
         }
+
         .close-modal:hover {
-            color: #000;
+            background: rgba(255,255,255,0.9);
+            color: #0f0f0f;
         }
-        .error-message {
-            background: #fee2e2;
-            color: #dc2626;
-            padding: 16px;
-            border-radius: 8px;
-            margin: 20px 0;
+
+        .video-player {
+            width: 80vw;
+            height: 45vw;
+            max-height: 70vh;
+            background: #000;
         }
-        .no-videos {
-            text-align: center;
-            padding: 40px;
-            color: #666;
-            background: white;
-            border-radius: 12px;
-            font-size: 16px;
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .netflix-header {
+                padding: 15px 20px;
+            }
+
+            .nav-menu {
+                gap: 20px;
+            }
+
+            .hero-title {
+                font-size: 2.5rem;
+            }
+
+            .hero-subtitle {
+                font-size: 1.1rem;
+            }
+
+            .video-card {
+                min-width: 250px;
+                height: 140px;
+            }
+
+            .content-wrapper {
+                padding: 0 20px;
+            }
         }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0f0f0f;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
         .login-prompt {
             position: fixed;
             top: 0;
@@ -549,288 +821,413 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1 class="welcome-text">
-                <% if (isAuthenticated) { %>
-                    Welcome back, <%= userInfo.email || userInfo.username %>
-                <% } else { %>
-                    Video Management Platform
-                <% } %>
-            </h1>
-            <% if (isAuthenticated) { %>
-                <div class="button-group">
-                    <a href="/upload" class="btn btn-primary">Upload New Video</a>
-                    <a href="/logout" class="btn btn-danger">Sign Out</a>
+    <% if (isAuthenticated) { %>
+        <!-- Netflix-style Header -->
+        <header class="netflix-header" id="header">
+            <div class="brand-logo">
+                <div class="brand-icon">🎬</div>
+                <div class="brand-text">Video Dashboard</div>
+            </div>
+            
+            <nav class="nav-menu">
+                <a href="#" class="nav-item active">Home</a>
+                <a href="#" class="nav-item">My List</a>
+                <a href="#" class="nav-item">Recently Added</a>
+            </nav>
+            
+            <div class="user-profile">
+                <div class="user-avatar">
+                    <%= (userInfo.email || userInfo.username || 'U').charAt(0).toUpperCase() %>
                 </div>
-            <% } %>
-        </div>
+                <div class="user-dropdown">
+                    <button class="dropdown-btn">
+                        <%= userInfo.email || userInfo.username %>
+                        <span style="margin-left: 8px;">▼</span>
+                    </button>
+                </div>
+            </div>
+        </header>
 
-        <% if (isAuthenticated) { %>
-            <div id="videoList">
-                <h2 class="section-title">Your Videos</h2>
-                <div id="videoItems" class="video-grid"></div>
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <div class="hero-content">
+                <h1 class="hero-title">Welcome Back</h1>
+                <p class="hero-subtitle">
+                    Manage your video library with professional tools. 
+                    Upload, process, and stream your content with enterprise-grade quality.
+                </p>
+                <div class="hero-buttons">
+                    <a href="/upload" class="btn-hero btn-primary-hero">
+                        ▶ Upload Video
+                    </a>
+                    <a href="#" class="btn-hero btn-secondary-hero">
+                        ℹ More Info
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Content Wrapper -->
+        <div class="content-wrapper">
+            <!-- Recently Uploaded -->
+            <div class="video-carousel">
+                <h2 class="section-title">Recently Uploaded</h2>
+                <div class="video-row" id="recentVideos"></div>
             </div>
 
-            <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-            <script>
-                async function fetchVideos() {
-                    try {
-                        const userId = '<%= userInfo.sub %>';
-                        const response = await fetch(`/api/videos/${userId}`);
-                        if (!response.ok) {
-                            throw new Error('Failed to fetch videos');
-                        }
-                        const videos = await response.json();
-                        displayVideos(videos);
-                    } catch (error) {
-                        console.error('Error fetching videos:', error);
-                        document.getElementById('videoItems').innerHTML = `
-                            <div class="error-message">
-                                Failed to load videos. Please try again later.
-                            </div>`;
+            <!-- Processing Videos -->
+            <div class="video-carousel">
+                <h2 class="section-title">Processing</h2>
+                <div class="video-row" id="processingVideos"></div>
+            </div>
+
+            <!-- Completed Videos -->
+            <div class="video-carousel">
+                <h2 class="section-title">Ready to Stream</h2>
+                <div class="video-row" id="completedVideos"></div>
+            </div>
+        </div>
+
+        <!-- Video Modal -->
+        <div class="video-modal" id="videoModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button class="close-modal" onclick="closeVideoModal()">×</button>
+                </div>
+                <video id="modalVideo" class="video-player" controls></video>
+            </div>
+        </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+        <script>
+            // Header scroll effect
+            window.addEventListener('scroll', () => {
+                const header = document.getElementById('header');
+                if (window.scrollY > 50) {
+                    header.classList.add('scrolled');
+                } else {
+                    header.classList.remove('scrolled');
+                }
+            });
+
+            async function fetchVideos() {
+                try {
+                    const userId = '<%= userInfo.sub %>';
+                    const response = await fetch(`/api/videos/${userId}`);
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch videos');
                     }
+                    const videos = await response.json();
+                    console.log('Fetched videos:', videos); // Debug log
+                    displayNetflixStyleVideos(videos);
+                } catch (error) {
+                    console.error('Error fetching videos:', error);
+                    showEmptyState();
+                }
+            }
+
+            function displayNetflixStyleVideos(videos) {
+                const recentContainer = document.getElementById('recentVideos');
+                const processingContainer = document.getElementById('processingVideos');
+                const completedContainer = document.getElementById('completedVideos');
+
+                if (!videos || videos.length === 0) {
+                    showEmptyState();
+                    return;
                 }
 
-                function displayVideos(videos) {
-                    const container = document.getElementById('videoItems');
-                    if (!videos || videos.length === 0) {
-                        container.innerHTML = '<div class="no-videos">No videos available.</div>';
-                        return;
-                    }
+                // Sort videos by upload date
+                const sortedVideos = videos.sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt));
+                const recentVideos = sortedVideos.slice(0, 6);
+                
+                // Group videos by playability rather than just status
+                const playableVideos = videos.filter(v => v.playbackUrls?.[0] && v.playbackUrls[0].trim() !== '');
+                const processingVideos = videos.filter(v => !v.playbackUrls?.[0] || v.playbackUrls[0].trim() === '');
 
-                    container.innerHTML = videos.map((video, index) => `
-                        <div class="video-item">
-                            <div class="thumbnail-container">
-                                <img src="${video.thumbnail || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIwIiBoZWlnaHQ9IjE4MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjY2NjIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIFRodW1ibmFpbDwvdGV4dD48L3N2Zz4='}" 
-                                     alt="${video.fileName}" 
-                                     class="video-thumbnail"
-                                     onload="this.style.opacity='1'"
-                                     onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIwIiBoZWlnaHQ9IjE4MCIgeG1zbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkVycm9yIExvYWRpbmc8L3RleHQ+PC9zdmc+'; this.style.opacity='0.7';">
-                                ${video.playbackUrls && video.playbackUrls.length > 0 ? 
-                                    `<button class="play-button" onclick="playVideo(${index}, '${video.playbackUrls[0]}')">
-                                        <div class="play-icon"></div>
-                                    </button>` : ''
-                                }
-                            </div>
-                            <div class="video-content">
-                                <div class="video-status status-${video.status}">${video.status}</div>
-                                <div class="video-title" title="${video.fileName}">${video.fileName}</div>
-                                <div class="video-controls">
-                                    <select id="quality-${index}" class="quality-selector" onchange="changeQuality(${index})" 
-                                            style="${video.playbackUrls && video.playbackUrls.length > 0 ? '' : 'display: none;'}">
-                                        <option value="auto">Auto</option>
-                                        <option value="720p">720p</option>
-                                        <option value="540p">540p</option>
-                                        <option value="360p">360p</option>
-                                    </select>
-                                    <span id="current-quality-${index}" class="quality-info" 
-                                          style="${video.playbackUrls && video.playbackUrls.length > 0 ? '' : 'display: none;'}">
-                                        Current Quality: Auto
-                                    </span>
-                                    ${!video.playbackUrls || video.playbackUrls.length === 0 ? 
-                                        '<span class="quality-info">Video processing...</span>' : ''
-                                    }
+                recentContainer.innerHTML = createVideoCards(recentVideos);
+                processingContainer.innerHTML = createVideoCards(processingVideos);
+                completedContainer.innerHTML = createVideoCards(playableVideos);
+
+                // Update section titles and hide empty sections
+                if (processingVideos.length === 0) {
+                    processingContainer.parentElement.style.display = 'none';
+                } else {
+                    processingContainer.parentElement.querySelector('.section-title').textContent = `Processing (${processingVideos.length})`;
+                }
+                
+                if (playableVideos.length === 0) {
+                    completedContainer.parentElement.style.display = 'none';
+                } else {
+                    completedContainer.parentElement.querySelector('.section-title').textContent = `Ready to Stream (${playableVideos.length})`;
+                }
+            }
+
+            function createVideoCards(videos) {
+                return videos.map((video, index) => {
+                    console.log('Creating card for video:', video); // Debug log
+                    const playbackUrl = video.playbackUrls?.[0] || video.streamingUrl || video.videoUrl || '';
+                    console.log('Playback URL:', playbackUrl); // Debug log
+                    
+                    // Check if video is playable (has playback URL) regardless of status
+                    const isPlayable = playbackUrl && playbackUrl.trim() !== '';
+                    
+                    return `
+                        <div class="video-card" onclick="handleVideoClick('${playbackUrl}', '${video.fileName}', '${video.status}', ${isPlayable})">
+                            <img src="${video.thumbnail || video.thumbnailUrl || 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 170"><rect width="300" height="170" fill="%23333"/><text x="150" y="95" text-anchor="middle" fill="%23999" font-family="Arial" font-size="14">🎬 Video Thumbnail</text></svg>'}" 
+                                 alt="${video.fileName}" 
+                                 class="video-thumbnail"
+                                 onerror="this.src='data:image/svg+xml,<svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 300 170\\"><rect width=\\"300\\" height=\\"170\\" fill=\\"%23333\\"/><text x=\\"150\\" y=\\"95\\" text-anchor=\\"middle\\" fill=\\"%23999\\" font-family=\\"Arial\\" font-size=\\"14\\">🎬 No Thumbnail</text></svg>'">
+                            
+                            <div class="video-overlay">
+                                <div class="video-info">
+                                    <div class="video-status status-${video.status}">${video.status.toUpperCase()}</div>
+                                    <div class="video-title">${video.fileName}</div>
+                                    <div class="video-actions">
+                                        ${isPlayable ? 
+                                            '<div class="action-btn play-btn">▶</div>' : 
+                                            '<div class="action-btn">⏳</div>'
+                                        }
+                                        <div class="action-btn">+</div>
+                                        <div class="action-btn">👍</div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    `).join('');
+                    `;
+                }).join('');
+            }
 
-                    // Create modal for video playback
-                    if (!document.getElementById('videoModal')) {
-                        const modal = document.createElement('div');
-                        modal.id = 'videoModal';
-                        modal.className = 'video-modal';
-                        modal.innerHTML = `
-                            <div class="modal-content">
-                                <button class="close-modal" onclick="closeVideoModal()">&times;</button>
-                                <video id="modalVideo" class="video-player" controls></video>
-                                <div class="video-controls">
-                                    <select id="modalQuality" class="quality-selector" onchange="changeModalQuality()">
-                                        <option value="auto">Auto</option>
-                                        <option value="720p">720p</option>
-                                        <option value="540p">540p</option>
-                                        <option value="360p">360p</option>
-                                    </select>
-                                    <span id="modalCurrentQuality" class="quality-info">Current Quality: Auto</span>
-                                </div>
-                            </div>
-                        `;
-                        document.body.appendChild(modal);
-                    }
+            function handleVideoClick(playbackUrl, title, status, isPlayable) {
+                console.log('Video clicked:', { playbackUrl, title, status, isPlayable }); // Debug log
+                
+                if (isPlayable && playbackUrl) {
+                    playVideo(playbackUrl, title);
+                } else if (!playbackUrl) {
+                    alert(`Video "${title}" doesn't have a playback URL available yet. Current status: ${status}`);
+                } else {
+                    alert(`Video "${title}" is still processing. Current status: ${status}. Please wait for processing to complete.`);
                 }
+            }
 
-                function playVideo(index, playbackUrl) {
-                    const modal = document.getElementById('videoModal');
-                    const video = document.getElementById('modalVideo');
-                    
-                    modal.style.display = 'flex';
+            function playVideo(playbackUrl, title) {
+                console.log('Attempting to play video:', playbackUrl); // Debug log
+                
+                const modal = document.getElementById('videoModal');
+                const video = document.getElementById('modalVideo');
+                
+                // Show modal
+                modal.style.display = 'flex';
+                
+                // Clean up any existing HLS instance
+                if (video.hlsInstance) {
+                    video.hlsInstance.destroy();
+                    video.hlsInstance = null;
+                }
+                
+                // Clear any existing src
+                video.src = '';
+                video.load();
+                
+                // Check if it's an HLS stream (.m3u8)
+                if (playbackUrl.includes('.m3u8')) {
+                    console.log('Detected HLS stream, using HLS.js');
                     
                     if (Hls.isSupported()) {
-                        if (video.hlsInstance) {
-                            video.hlsInstance.destroy();
-                        }
-                        
                         const hls = new Hls({
                             startLevel: -1,
-                            capLevelToPlayerSize: true
+                            capLevelToPlayerSize: true,
+                            enableWorker: true,
+                            lowLatencyMode: true,
+                            backBufferLength: 90
                         });
 
                         hls.loadSource(playbackUrl);
                         hls.attachMedia(video);
-
-                        hls.on(Hls.Events.LEVEL_SWITCHED, (event, data) => {
-                            const currentLevel = hls.levels[data.level];
-                            if (currentLevel) {
-                                const quality = currentLevel.height + 'p';
-                                document.getElementById('modalCurrentQuality').textContent = 
-                                    `Current Quality: ${hls.autoLevelEnabled ? 'Auto (' + quality + ')' : quality}`;
+                        
+                        hls.on(Hls.Events.MANIFEST_PARSED, function () {
+                            console.log('HLS manifest parsed, starting playback');
+                            video.play().catch(e => console.error('Play failed:', e));
+                        });
+                        
+                        hls.on(Hls.Events.ERROR, function (event, data) {
+                            console.error('HLS error:', data);
+                            if (data.fatal) {
+                                switch (data.type) {
+                                    case Hls.ErrorTypes.NETWORK_ERROR:
+                                        console.log('Fatal network error encountered, trying to recover');
+                                        hls.startLoad();
+                                        break;
+                                    case Hls.ErrorTypes.MEDIA_ERROR:
+                                        console.log('Fatal media error encountered, trying to recover');
+                                        hls.recoverMediaError();
+                                        break;
+                                    default:
+                                        console.log('Fatal error, cannot recover');
+                                        hls.destroy();
+                                        break;
+                                }
                             }
                         });
 
                         video.hlsInstance = hls;
                     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                        console.log('Using native HLS support');
                         video.src = playbackUrl;
-                        document.getElementById('modalQuality').style.display = 'none';
-                        document.getElementById('modalCurrentQuality').style.display = 'none';
+                        video.play().catch(e => console.error('Native play failed:', e));
+                    } else {
+                        alert('HLS is not supported in this browser');
                     }
+                } else {
+                    console.log('Direct video file, using native player');
+                    // Direct video file (MP4, etc.)
+                    video.src = playbackUrl;
+                    video.play().catch(e => {
+                        console.error('Direct play failed:', e);
+                        alert('Failed to play video. The video format might not be supported.');
+                    });
                 }
-
-                function closeVideoModal() {
-                    const modal = document.getElementById('videoModal');
-                    const video = document.getElementById('modalVideo');
-                    
-                    modal.style.display = 'none';
-                    video.pause();
-                    
-                    if (video.hlsInstance) {
-                        video.hlsInstance.destroy();
-                        video.hlsInstance = null;
-                    }
-                }
-
-                function changeModalQuality() {
-                    const video = document.getElementById('modalVideo');
-                    const quality = document.getElementById('modalQuality').value;
-                    const hls = video.hlsInstance;
-
-                    if (hls) {
-                        if (quality === 'auto') {
-                            hls.currentLevel = -1;
-                        } else {
-                            const level = hls.levels.findIndex(level => 
-                                level.height === parseInt(quality));
-                            if (level !== -1) {
-                                hls.currentLevel = level;
-                            }
-                        }
-                    }
-                }
-
-                function initializeVideo(playbackUrl, index) {
-                    // This function is now handled by the modal
-                }
-
-                function changeQuality(index) {
-                    // Individual video quality changes are now handled in modal
-                }
-
-                // Close modal when clicking outside
-                document.addEventListener('click', function(event) {
-                    const modal = document.getElementById('videoModal');
-                    if (event.target === modal) {
-                        closeVideoModal();
-                    }
-                });
-
-                // Fetch videos when page loads
-                document.addEventListener('DOMContentLoaded', fetchVideos);
-            </script>
-        <% } else { %>
-            <div class="login-prompt">
-                <div class="login-overlay"></div>
                 
-                <div class="floating-elements">
-                    <div class="floating-icon">☁️</div>
-                    <div class="floating-icon">🎬</div>
-                    <div class="floating-icon">📹</div>
-                    <div class="floating-icon">⚡</div>
-                    <div class="floating-icon">🎥</div>
-                    <div class="floating-icon">📽️</div>
-                    <div class="floating-icon">🎞️</div>
-                    <div class="floating-icon">🚀</div>
-                    <div class="floating-icon">💡</div>
-                    <div class="floating-icon">🔧</div>
+                // Add error handling for the video element
+                video.onerror = function(e) {
+                    console.error('Video element error:', e);
+                    alert('Error loading video. Please check the video URL or format.');
+                };
+                
+                video.onloadstart = function() {
+                    console.log('Video loading started');
+                };
+                
+                video.oncanplay = function() {
+                    console.log('Video can start playing');
+                };
+            }
+
+            function closeVideoModal() {
+                const modal = document.getElementById('videoModal');
+                const video = document.getElementById('modalVideo');
+                
+                modal.style.display = 'none';
+                video.pause();
+                
+                // Clean up HLS instance
+                if (video.hlsInstance) {
+                    video.hlsInstance.destroy();
+                    video.hlsInstance = null;
+                }
+                
+                // Clear video source
+                video.src = '';
+                video.load();
+            }
+
+            function showEmptyState() {
+                const recentContainer = document.getElementById('recentVideos');
+                recentContainer.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">🎬</div>
+                        <div class="empty-title">No videos yet</div>
+                        <div class="empty-subtitle">Upload your first video to get started</div>
+                        <a href="/upload" class="btn-hero btn-primary-hero" style="margin-top: 20px;">
+                            ▶ Upload Your First Video
+                        </div>
+                `;
+            }
+
+            // Close modal when clicking outside
+            document.addEventListener('click', function(event) {
+                const modal = document.getElementById('videoModal');
+                if (event.target === modal) {
+                    closeVideoModal();
+                }
+            });
+
+            // Fetch videos when page loads
+            document.addEventListener('DOMContentLoaded', fetchVideos);
+        </script>
+    <% } else { %>
+        <div class="login-prompt">
+            <div class="login-overlay"></div>
+            
+            <div class="floating-elements">
+                <div class="floating-icon">☁️</div>
+                <div class="floating-icon">🎬</div>
+                <div class="floating-icon">📹</div>
+                <div class="floating-icon">⚡</div>
+                <div class="floating-icon">🎥</div>
+                <div class="floating-icon">📽️</div>
+                <div class="floating-icon">🎞️</div>
+                <div class="floating-icon">🚀</div>
+                <div class="floating-icon">💡</div>
+                <div class="floating-icon">🔧</div>
+            </div>
+
+            <div class="login-container">
+                <div class="login-header">
+                    <div class="aws-logo">🎬</div>
+                    <h1 class="login-title">VideoHub</h1>
+                    <p class="login-subtitle">Professional Video Management Platform</p>
                 </div>
+                
+                <div class="login-body">
+                    <p class="login-description">
+                        Experience the next generation of video management with enterprise-grade security, 
+                        lightning-fast streaming, and professional tools designed for content creators.
+                    </p>
 
-                <div class="login-container">
-                    <div class="login-header">
-                        <div class="aws-logo">🎬</div>
-                        <h1 class="login-title">VideoHub</h1>
-                        <p class="login-subtitle">Professional Video Management Platform</p>
+                    <div class="features-grid">
+                        <div class="feature-card">
+                            <span class="feature-card-icon">☁️</span>
+                            <div class="feature-card-title">Cloud Storage</div>
+                            <div class="feature-card-desc">Unlimited secure storage</div>
+                        </div>
+                        <div class="feature-card">
+                            <span class="feature-card-icon">⚡</span>
+                            <div class="feature-card-title">Fast Delivery</div>
+                            <div class="feature-card-desc">Global CDN network</div>
+                        </div>
+                        <div class="feature-card">
+                            <span class="feature-card-icon">🔒</span>
+                            <div class="feature-card-title">Enterprise Security</div>
+                            <div class="feature-card-desc">AWS-grade protection</div>
+                        </div>
                     </div>
-                    
-                    <div class="login-body">
-                        <p class="login-description">
-                            Experience the next generation of video management with enterprise-grade security, 
-                            lightning-fast streaming, and professional tools designed for content creators.
-                        </p>
 
-                        <div class="features-grid">
-                            <div class="feature-card">
-                                <span class="feature-card-icon">☁️</span>
-                                <div class="feature-card-title">Cloud Storage</div>
-                                <div class="feature-card-desc">Unlimited secure storage</div>
-                            </div>
-                            <div class="feature-card">
-                                <span class="feature-card-icon">⚡</span>
-                                <div class="feature-card-title">Fast Delivery</div>
-                                <div class="feature-card-desc">Global CDN network</div>
-                            </div>
-                            <div class="feature-card">
-                                <span class="feature-card-icon">🔒</span>
-                                <div class="feature-card-title">Enterprise Security</div>
-                                <div class="feature-card-desc">AWS-grade protection</div>
-                            </div>
+                    <div class="stats-row">
+                        <div class="stat-item">
+                            <span class="stat-number">99.9%</span>
+                            <span class="stat-label">Uptime</span>
                         </div>
-
-                        <div class="stats-row">
-                            <div class="stat-item">
-                                <span class="stat-number">99.9%</span>
-                                <span class="stat-label">Uptime</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-number">50M+</span>
-                                <span class="stat-label">Videos Served</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-number">150+</span>
-                                <span class="stat-label">Countries</span>
-                            </div>
+                        <div class="stat-item">
+                            <span class="stat-number">50M+</span>
+                            <span class="stat-label">Videos Served</span>
                         </div>
-
-                        <a href="/login" class="signin-button">
-                            <span>🚀</span>
-                            Sign in with SSO
-                        </a>
-
-                        <div class="security-notice">
-                            <span class="security-notice-icon">🔒</span>
-                            <span class="security-notice-text">
-                                Secured by Amazon Web Services with enterprise-grade authentication
-                            </span>
+                        <div class="stat-item">
+                            <span class="stat-number">150+</span>
+                            <span class="stat-label">Countries</span>
                         </div>
+                    </div>
 
-                        <div class="trust-badges">
-                            <span class="trust-badge">🛡️</span>
-                            <span class="trust-badge">⭐</span>
-                            <span class="trust-badge">🏆</span>
-                            <span class="trust-badge">💎</span>
-                        </div>
+                    <a href="/login" class="signin-button">
+                        <span>🚀</span>
+                        Sign in with SS0
+                    </a>
+
+                    <div class="security-notice">
+                        <span class="security-notice-icon">🔒</span>
+                        <span class="security-notice-text">
+                            Secured by Amazon Web Services with enterprise-grade authentication
+                        </span>
+                    </div>
+
+                    <div class="trust-badges">
+                        <span class="trust-badge">🛡️</span>
+                        <span class="trust-badge">⭐</span>
+                        <span class="trust-badge">🏆</span>
+                        <span class="trust-badge">💎</span>
                     </div>
                 </div>
             </div>
-        <% } %>
-    </div>
+        </div>
+    <% } %>
 </body>
 </html>

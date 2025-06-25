@@ -1,173 +1,687 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>File Upload</title>
+    <title>Video - Upload Content</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Netflix Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             margin: 0;
-            padding: 20px;
-            background-color: #f0f2f5;
+            padding: 0;
+            background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 50%, #0f0f0f 100%);
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
         }
-        .upload-container {
-            max-width: 800px;
-            margin: 40px auto;
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
+        /* Animated Background */
+        .background-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(229, 9, 20, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(255, 153, 0, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(20, 110, 180, 0.1) 0%, transparent 50%);
+            animation: backgroundFloat 20s ease-in-out infinite;
+            z-index: 1;
         }
+
+        @keyframes backgroundFloat {
+            0%, 100% { opacity: 0.3; transform: scale(1) rotate(0deg); }
+            50% { opacity: 0.6; transform: scale(1.1) rotate(5deg); }
+        }
+
+        /* Header */
         .header {
+            position: relative;
+            z-index: 100;
+            background: rgba(0,0,0,0.9);
+            backdrop-filter: blur(10px);
+            padding: 20px 4%;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid #e1e4e8;
         }
-        .header h1 {
-            color: #1a73e8;
-            margin: 0;
+
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
-        .form-group {
-            margin-bottom: 24px;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-            color: #444;
-        }
-        .file-input-wrapper {
-            position: relative;
-            padding: 30px;
-            border: 2px dashed #1a73e8;
+
+        .brand-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #e50914 0%, #f40612 100%);
             border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .brand-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #e50914;
+        }
+
+        .back-btn {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-2px);
+        }
+
+        /* Main Content */
+        .main-content {
+            position: relative;
+            z-index: 10;
+            max-width: 900px;
+            margin: 60px auto;
+            padding: 0 20px;
+        }
+
+        .upload-hero {
             text-align: center;
-            cursor: pointer;
-            transition: all 0.2s;
+            margin-bottom: 60px;
         }
-        .file-input-wrapper:hover {
-            background-color: #f8f9fa;
+
+        .upload-title {
+            font-size: 3rem;
+            font-weight: 900;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #e50914, #ff6b35, #f7931e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 4px 8px rgba(229, 9, 20, 0.3);
         }
-        .file-input {
-            width: 100%;
-            height: 100%;
-            opacity: 0;
+
+        .upload-subtitle {
+            font-size: 1.2rem;
+            color: #b3b3b3;
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+
+        /* Upload Container */
+        .upload-container {
+            background: rgba(20, 20, 20, 0.9);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 40px;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-container::before {
+            content: '';
             position: absolute;
             top: 0;
             left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #e50914, #ff6b35, #f7931e, #e50914);
+            background-size: 200% 100%;
+            animation: gradientShift 3s ease-in-out infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        /* File Upload Area */
+        .file-upload-area {
+            border: 3px dashed rgba(229, 9, 20, 0.5);
+            border-radius: 16px;
+            padding: 60px 40px;
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+            cursor: pointer;
+            background: rgba(229, 9, 20, 0.05);
+            margin-bottom: 30px;
+        }
+
+        .file-upload-area:hover {
+            border-color: #e50914;
+            background: rgba(229, 9, 20, 0.1);
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(229, 9, 20, 0.2);
+        }
+
+        .file-upload-area.drag-over {
+            border-color: #e50914;
+            background: rgba(229, 9, 20, 0.2);
+            transform: scale(1.02);
+        }
+
+        .file-input {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
             cursor: pointer;
         }
-        .btn {
-            display: inline-block;
-            padding: 12px 24px;
-            border-radius: 6px;
-            text-decoration: none;
+
+        .upload-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            color: #e50914;
+            animation: bounce 2s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+
+        .upload-text {
+            font-size: 1.3rem;
+            color: white;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .upload-subtext {
+            color: #b3b3b3;
+            font-size: 1rem;
+            margin-bottom: 20px;
+        }
+
+        .supported-formats {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .format-tag {
+            background: rgba(229, 9, 20, 0.2);
+            color: #e50914;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
             font-weight: 500;
-            transition: all 0.2s;
-            border: none;
-            cursor: pointer;
+            border: 1px solid rgba(229, 9, 20, 0.3);
         }
-        .btn-primary {
-            background-color: #1a73e8;
-            color: white;
-        }
-        .btn-secondary {
-            background-color: #6c757d;
-            color: white;
-        }
-        .btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        #uploadStatus {
-            margin-top: 20px;
-            padding: 16px;
-            border-radius: 6px;
+
+        /* File Info Display */
+        .file-info {
             display: none;
+            background: rgba(46, 204, 113, 0.1);
+            border: 1px solid rgba(46, 204, 113, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
         }
-        .success {
-            background-color: #d1fae5;
-            color: #047857;
+
+        .file-name {
+            font-size: 1.1rem;
+            color: #2ecc71;
+            font-weight: 600;
+            margin-bottom: 5px;
         }
-        .error {
-            background-color: #fee2e2;
-            color: #dc2626;
+
+        .file-size {
+            color: #b3b3b3;
+            font-size: 0.9rem;
         }
-        .info {
-            background-color: #e0f2fe;
-            color: #0369a1;
+
+        /* Upload Button */
+        .upload-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #e50914 0%, #f40612 100%);
+            color: white;
+            border: none;
+            padding: 18px 30px;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .upload-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .upload-btn:hover::before {
+            left: 100%;
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(229, 9, 20, 0.4);
+        }
+
+        .upload-btn:disabled {
+            background: #555;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            display: none;
+            margin: 20px 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #e50914, #f40612);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            text-align: center;
+            margin-top: 10px;
+            color: #b3b3b3;
+            font-size: 0.9rem;
+        }
+
+        /* Status Messages */
+        .status-message {
+            margin-top: 20px;
+            padding: 16px 20px;
+            border-radius: 12px;
+            font-weight: 500;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .status-success {
+            background: rgba(46, 204, 113, 0.1);
+            border: 1px solid rgba(46, 204, 113, 0.3);
+            color: #2ecc71;
+        }
+
+        .status-error {
+            background: rgba(231, 76, 60, 0.1);
+            border: 1px solid rgba(231, 76, 60, 0.3);
+            color: #e74c3c;
+        }
+
+        .status-info {
+            background: rgba(52, 152, 219, 0.1);
+            border: 1px solid rgba(52, 152, 219, 0.3);
+            color: #3498db;
+        }
+
+        /* Tips Section */
+        .upload-tips {
+            margin-top: 40px;
+            padding: 30px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .tips-title {
+            font-size: 1.3rem;
+            color: white;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .tips-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .tip-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .tip-icon {
+            background: rgba(229, 9, 20, 0.2);
+            color: #e50914;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+
+        .tip-content {
+            flex: 1;
+        }
+
+        .tip-title {
+            color: white;
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 0.95rem;
+        }
+
+        .tip-text {
+            color: #b3b3b3;
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .upload-title {
+                font-size: 2rem;
+            }
+
+            .upload-container {
+                padding: 30px 20px;
+                margin: 20px;
+            }
+
+            .file-upload-area {
+                padding: 40px 20px;
+            }
+
+            .tips-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header-content {
+                padding: 0 20px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="upload-container">
-        <div class="header">
-            <h1>Upload Video</h1>
-            <a href="/" class="btn btn-secondary">Back to Homepage</a>
+    <div class="background-animation"></div>
+
+    <!-- Header -->
+    <div class="header">
+        <div class="header-content">
+            <div class="brand-logo">
+                <div class="brand-icon">🎬</div>
+                <div class="brand-text">VideoHub</div>
+            </div>
+            <a href="/" class="back-btn">← Back to Dashboard</a>
         </div>
-        
-        <div class="form-group">
-            <div class="file-input-wrapper">
-                <input type="file" id="file" accept="video/*,audio/*" class="file-input" />
-                <p>Drag and drop your video here or click to browse</p>
-                <p style="color: #666; font-size: 14px;">Supported formats: MP4, MOV, AVI</p>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="upload-hero">
+            <h1 class="upload-title">Upload Your Content</h1>
+            <p class="upload-subtitle">
+                Transform your videos into professional streaming content with our advanced processing pipeline
+            </p>
+        </div>
+
+        <div class="upload-container">
+            <div class="file-upload-area" id="fileUploadArea">
+                <input type="file" id="fileInput" accept="video/*,audio/*" class="file-input">
+                <div class="upload-icon">🎬</div>
+                <div class="upload-text">Drag & Drop Your Video Here</div>
+                <div class="upload-subtext">or click to browse your files</div>
+                <div class="supported-formats">
+                    <span class="format-tag">MP4</span>
+                    <span class="format-tag">MOV</span>
+                    <span class="format-tag">AVI</span>
+                    <span class="format-tag">MKV</span>
+                    <span class="format-tag">WebM</span>
+                </div>
+            </div>
+
+            <div class="file-info" id="fileInfo">
+                <div class="file-name" id="fileName"></div>
+                <div class="file-size" id="fileSize"></div>
+            </div>
+
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text" id="progressText">Uploading... 0%</div>
+            </div>
+
+            <button class="upload-btn" id="uploadBtn" onclick="uploadFile()">
+                🚀 Start Upload
+            </button>
+
+            <div class="status-message" id="statusMessage"></div>
+        </div>
+
+        <div class="upload-tips">
+            <h3 class="tips-title">💡 Upload Tips for Best Results</h3>
+            <div class="tips-grid">
+                <div class="tip-item">
+                    <div class="tip-icon">📹</div>
+                    <div class="tip-content">
+                        <div class="tip-title">Video Quality</div>
+                        <div class="tip-text">Upload in highest quality available. We'll optimize for all devices automatically.</div>
+                    </div>
+                </div>
+                <div class="tip-item">
+                    <div class="tip-icon">⚡</div>
+                    <div class="tip-content">
+                        <div class="tip-title">Processing Speed</div>
+                        <div class="tip-text">Smaller files process faster. Consider compressing very large videos first.</div>
+                    </div>
+                </div>
+                <div class="tip-item">
+                    <div class="tip-icon">🎯</div>
+                    <div class="tip-content">
+                        <div class="tip-title">File Naming</div>
+                        <div class="tip-text">Use descriptive filenames to easily identify your content later.</div>
+                    </div>
+                </div>
+                <div class="tip-item">
+                    <div class="tip-icon">🔒</div>
+                    <div class="tip-content">
+                        <div class="tip-title">Security</div>
+                        <div class="tip-text">Your files are encrypted during upload and stored securely in AWS.</div>
+                    </div>
+                </div>
             </div>
         </div>
-        
-        <button onclick="uploadFile()" class="btn btn-primary">Upload Video</button>
-        <div id="uploadStatus"></div>
     </div>
 
     <script>
-    async function uploadFile() {
-        const fileInput = document.getElementById('file');
-        const statusDiv = document.getElementById('uploadStatus');
-        
-        if (!fileInput.files[0]) {
-            showStatus('Please select a file', 'error');
-            return;
+        const fileUploadArea = document.getElementById('fileUploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const statusMessage = document.getElementById('statusMessage');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+
+        // Drag and drop functionality
+        fileUploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            fileUploadArea.classList.add('drag-over');
+        });
+
+        fileUploadArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            fileUploadArea.classList.remove('drag-over');
+        });
+
+        fileUploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            fileUploadArea.classList.remove('drag-over');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileSelection(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileSelection(e.target.files[0]);
+            }
+        });
+
+        function handleFileSelection(file) {
+            // Display file info
+            fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+            fileInfo.style.display = 'block';
+
+            // Enable upload button
+            uploadBtn.disabled = false;
+            uploadBtn.textContent = '🚀 Upload ' + file.name;
+
+            // Hide any previous messages
+            hideStatus();
         }
 
-        const file = fileInput.files[0];
-        
-        try {
-            showStatus('Uploading file...', 'info');
-            
-            // Create FormData and append file
-            const formData = new FormData();
-            formData.append('file', file);
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
 
-            // Upload file and get presigned URL
-            const presignedResponse = await fetch('/api/presigned-url', {
-                method: 'POST',
-                headers: {
-                    'Authorization': 'Bearer <%= token %>',
-                    'x-email-id': '<%= email %>',
-                    'X-sub-id': '<%= userId %>'
-                },
-                body: formData
-            });
-
-            if (!presignedResponse.ok) {
-                const errorData = await presignedResponse.json();
-                throw new Error(errorData.error || errorData.details || 'Failed to upload file');
+        async function uploadFile() {
+            const file = fileInput.files[0];
+            if (!file) {
+                showStatus('Please select a file first', 'error');
+                return;
             }
 
-            showStatus('File uploaded successfully!', 'success');
-        } catch (error) {
-            showStatus(`Upload failed: ${error.message}`, 'error');
-            console.error('Upload error:', error);
-        }
-    }
+            try {
+                // Show progress
+                showProgress();
+                updateProgress(0, 'Preparing upload...');
 
-    function showStatus(message, type) {
-        const statusDiv = document.getElementById('uploadStatus');
-        statusDiv.textContent = message;
-        statusDiv.className = type;
-        statusDiv.style.display = 'block';
-    }
+                // Create FormData
+                const formData = new FormData();
+                formData.append('file', file);
+
+                // Simulate progress (since we can't get real upload progress easily)
+                updateProgress(25, 'Uploading to server...');
+
+                // Upload file
+                const response = await fetch('/api/presigned-url', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer <%= token %>',
+                        'x-email-id': '<%= email %>',
+                        'X-sub-id': '<%= userId %>'
+                    },
+                    body: formData
+                });
+
+                updateProgress(75, 'Processing upload...');
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || errorData.details || 'Upload failed');
+                }
+
+                updateProgress(100, 'Upload complete!');
+                
+                setTimeout(() => {
+                    hideProgress();
+                    showStatus('🎉 File uploaded successfully! Your video is now being processed.', 'success');
+                    resetForm();
+                }, 1000);
+
+            } catch (error) {
+                hideProgress();
+                showStatus(`❌ Upload failed: ${error.message}`, 'error');
+                console.error('Upload error:', error);
+            }
+        }
+
+        function showProgress() {
+            progressContainer.style.display = 'block';
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = 'Uploading...';
+        }
+
+        function hideProgress() {
+            progressContainer.style.display = 'none';
+            uploadBtn.disabled = false;
+        }
+
+        function updateProgress(percent, message) {
+            progressFill.style.width = percent + '%';
+            progressText.textContent = message + ' ' + percent + '%';
+        }
+
+        function showStatus(message, type) {
+            statusMessage.textContent = message;
+            statusMessage.className = `status-message status-${type}`;
+            statusMessage.style.display = 'block';
+        }
+
+        function hideStatus() {
+            statusMessage.style.display = 'none';
+        }
+
+        function resetForm() {
+            fileInput.value = '';
+            fileInfo.style.display = 'none';
+            uploadBtn.textContent = '🚀 Start Upload';
+            uploadBtn.disabled = true;
+        }
+
+        // Initialize
+        uploadBtn.disabled = true;
     </script>
 </body>
 </html>

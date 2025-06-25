@@ -7,7 +7,7 @@
     <!-- Video.js CSS -->
     <link href="https://vjs.zencdn.net/8.6.1/video-js.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/video-player.css">
-    <script src="/js/video-player.js"></script>
+    
 
 </head>
 <body>
@@ -44,7 +44,10 @@
                 class="video-js vjs-default-skin video-player"
                 controls
                 preload="auto"
-                data-setup='{}'>
+                data-setup='{}'
+                controlsList="nodownload nofullscreen noremoteplayback"
+                >
+                <source src="<%= videoUrl %>" type="application/x-mpegURL" data-quality="auto">
                 <p class="vjs-no-js">
                     To view this video please enable JavaScript, and consider upgrading to a web browser that
                     <a href="https://videojs.com/html5-video-support/" target="_blank">supports HTML5 video</a>.
@@ -62,10 +65,11 @@
             </div>
 
             <!-- Settings Menu -->
-            <div class="settings-menu" id="settingsMenu">
-                <div class="settings-item" onclick="toggleQualityMenu()">
+            <div class="settings-menu" id="settingsMenu" style="position:relative;z-index:10;">
+                <div class="settings-item" id="qualitySettingsItem" tabindex="0">
                     <span class="settings-label">Quality</span>
                     <span class="settings-value" id="currentQuality">Auto</span>
+                    <span style="margin-left:8px;">▼</span>
                 </div>
                 <div class="settings-item" onclick="togglePlaybackSpeed()">
                     <span class="settings-label">Speed</span>
@@ -74,12 +78,8 @@
             </div>
 
             <!-- Quality Menu -->
-            <div class="quality-menu" id="qualityMenu">
-                <div class="quality-item active" data-quality="auto">Auto</div>
-                <div class="quality-item" data-quality="1080p">1080p</div>
-                <div class="quality-item" data-quality="720p">720p</div>
-                <div class="quality-item" data-quality="480p">480p</div>
-                <div class="quality-item" data-quality="360p">360p</div>
+            <div class="quality-menu" id="qualityMenu" style="display:none;position:absolute;top:40px;right:20px;z-index:20;background:#222;padding:10px 0;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.3);min-width:120px;">
+                <!-- Quality options will be injected dynamically -->
             </div>
         </div>
 
@@ -123,8 +123,103 @@
     <!-- Scripts -->
     <script src="https://vjs.zencdn.net/8.6.1/video.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@1.4.14/dist/hls.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/videojs-contrib-hls@5.15.0/dist/videojs-contrib-hls.min.js"></script>
+    <script>
+        let hls;
+        const video = document.getElementById('youtube-player');
+        const qualityMenu = document.getElementById('qualityMenu');
+        const currentQualityLabel = document.getElementById('currentQuality');
+        const qualitySettingsItem = document.getElementById('qualitySettingsItem');
 
- 
+        // Dynamically populate quality menu based on HLS levels
+        function populateQualityMenu(levels) {
+            let html = `<div class="quality-item active" data-quality="auto">Auto</div>`;
+            // Sort by height descending (highest first)
+            const sorted = levels.slice().sort((a, b) => b.height - a.height);
+            const seen = new Set();
+            sorted.forEach(level => {
+                if (!seen.has(level.height) && level.height > 0) {
+                    html += `<div class="quality-item" data-quality="${level.height}">${level.height}p</div>`;
+                    seen.add(level.height);
+                }
+            });
+            qualityMenu.innerHTML = html;
+            activateQualityMenu();
+        }
+
+        function setHlsQuality(quality) {
+            if (!hls) return;
+            if (quality === 'auto') {
+                hls.currentLevel = -1;
+                currentQualityLabel.textContent = 'AUTO';
+            } else {
+                // Find the level index for the selected height
+                const idx = hls.levels.findIndex(l => l.height == quality);
+                if (idx !== -1) {
+                    hls.currentLevel = idx;
+                    currentQualityLabel.textContent = `${quality}P`;
+                }
+            }
+        }
+
+        function activateQualityMenu() {
+            const items = qualityMenu.querySelectorAll('.quality-item');
+            items.forEach(item => {
+                item.onclick = function() {
+                    items.forEach(i => i.classList.remove('active'));
+                    this.classList.add('active');
+                    setHlsQuality(this.getAttribute('data-quality'));
+                    qualityMenu.style.display = 'none';
+                };
+            });
+        }
+
+        function toggleQualityMenu() {
+            qualityMenu.style.display = (qualityMenu.style.display === 'block') ? 'none' : 'block';
+        }
+
+        // Show menu on click or keyboard
+        qualitySettingsItem.addEventListener('click', toggleQualityMenu);
+        qualitySettingsItem.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                toggleQualityMenu();
+            }
+        });
+
+        // Hide quality menu when clicking outside
+        document.addEventListener('click', function(e) {
+            const settings = document.getElementById('settingsMenu');
+            if (qualityMenu && qualityMenu.style.display === 'block' && !settings.contains(e.target) && !qualityMenu.contains(e.target)) {
+                qualityMenu.style.display = 'none';
+            }
+        });
+
+        function initHlsPlayer() {
+            if (Hls.isSupported()) {
+                hls = new Hls();
+                hls.loadSource("<%= videoUrl %>");
+                hls.attachMedia(video);
+
+                hls.on(Hls.Events.MANIFEST_PARSED, function (_, data) {
+                    populateQualityMenu(hls.levels);
+                    setHlsQuality('auto');
+                });
+
+                hls.on(Hls.Events.LEVEL_SWITCHED, function(event, data) {
+                    // Optionally update UI here
+                });
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                video.src = "<%= videoUrl %>";
+                currentQualityLabel.textContent = 'AUTO';
+                // Native HLS (Safari): quality switching not supported
+                qualityMenu.innerHTML = `<div class="quality-item active" data-quality="auto">Auto</div>`;
+            } else {
+                alert('HLS is not supported in this browser.');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', initHlsPlayer);
+    </script>
+    <!-- ...existing code... -->
 </body>
 </html>

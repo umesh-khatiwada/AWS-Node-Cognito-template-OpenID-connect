@@ -7,34 +7,35 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #f0f2f5;
+            background-color: #f8f9fa;
             min-height: 100vh;
         }
         .container {
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
+            background-color: #f8f9fa;
         }
         .header {
             background: white;
             padding: 20px 30px;
             border-radius: 12px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             margin-bottom: 24px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border: 1px solid #e9ecef;
         }
         .welcome-text {
-            color: #1a73e8;
+            color: #2c3e50;
             margin: 0;
             font-size: 24px;
-            font-weight: 500;
+            font-weight: 600;
         }
         .button-group {
             display: flex;
             gap: 12px;
-            margin: 20px 0;
         }
         .btn {
             display: inline-flex;
@@ -45,18 +46,35 @@
             font-weight: 500;
             transition: all 0.2s;
             border: none;
+            cursor: pointer;
         }
         .btn-primary {
-            background-color: #1a73e8;
+            background-color: #007bff;
             color: white;
+            border: 1px solid #007bff;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #0056b3;
         }
         .btn-danger {
             background-color: #dc3545;
             color: white;
+            border: 1px solid #dc3545;
+        }
+        .btn-danger:hover {
+            background-color: #c82333;
+            border-color: #c82333;
         }
         .btn:hover {
             transform: translateY(-1px);
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .section-title {
+            color: #2c3e50;
+            margin: 0 0 20px 0;
+            font-size: 20px;
+            font-weight: 600;
         }
         .video-grid {
             display: grid;
@@ -68,108 +86,142 @@
             background: white;
             border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            transition: transform 0.2s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 1px solid #e9ecef;
         }
         .video-item:hover {
             transform: translateY(-4px);
-            box-shadow: 0 6px 12px rgba(0,0,0,0.1);
-        }
-        .video-thumbnail {
-            width: 100%;
-            aspect-ratio: 16/9;
-            object-fit: cover;
-            background: #f0f0f0;
-            transition: opacity 0.3s ease;
-        }
-        .thumbnail-loading {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: #666;
-            font-size: 14px;
-            pointer-events: none;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
         }
         .thumbnail-container {
             position: relative;
             overflow: hidden;
             background: #f8f9fa;
         }
-        .thumbnail-error {
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .video-thumbnail {
             width: 100%;
             aspect-ratio: 16/9;
+            object-fit: cover;
             background: #e9ecef;
-            color: #6c757d;
-            font-size: 14px;
+            transition: all 0.3s ease;
         }
-        .video-content {
-            padding: 16px;
-        }
-        .video-title {
-            font-size: 16px;
-            font-weight: 500;
-            color: #1a73e8;
-            margin-bottom: 12px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .video-status {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: 500;
-            margin-bottom: 12px;
-        }
-        .status-submitted {
-            background-color: #e0f2fe;
-            color: #0369a1;
-        }
-        .status-processing {
-            background-color: #fef3c7;
-            color: #d97706;
-        }
-        .status-completed {
-            background-color: #d1fae5;
-            color: #047857;
+        .video-item:hover .video-thumbnail {
+            transform: scale(1.05);
         }
         .play-button {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.7);
-            border: none;
+            background: rgba(255,255,255,0.95);
+            border: 2px solid #007bff;
             border-radius: 50%;
             width: 60px;
             height: 60px;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.3s ease;
             display: flex;
             align-items: center;
             justify-content: center;
+            opacity: 0;
+            box-shadow: 0 4px 15px rgba(0,123,255,0.3);
+        }
+        .video-item:hover .play-button {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1.1);
         }
         .play-button:hover {
-            background: rgba(0,0,0,0.9);
-            transform: translate(-50%, -50%) scale(1.1);
+            background: #007bff;
+            transform: translate(-50%, -50%) scale(1.2);
+        }
+        .play-button:hover .play-icon {
+            border-left-color: white;
         }
         .play-icon {
             width: 0;
             height: 0;
-            border-left: 20px solid white;
-            border-top: 12px solid transparent;
-            border-bottom: 12px solid transparent;
-            margin-left: 4px;
+            border-left: 18px solid #007bff;
+            border-top: 11px solid transparent;
+            border-bottom: 11px solid transparent;
+            margin-left: 3px;
+            transition: all 0.2s ease;
         }
-        .video-player {
-            width: 100%;
-            aspect-ratio: 16/9;
-            background: #000;
+        .video-content {
+            padding: 20px;
+            background: white;
+        }
+        .video-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .video-status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .status-submitted {
+            background-color: #e3f2fd;
+            color: #1976d2;
+            border: 1px solid #bbdefb;
+        }
+        .status-processing {
+            background-color: #fff3e0;
+            color: #f57c00;
+            border: 1px solid #ffcc02;
+        }
+        .status-completed {
+            background-color: #e8f5e8;
+            color: #2e7d32;
+            border: 1px solid #c8e6c9;
+        }
+        .video-details {
+            font-size: 12px;
+            color: #6c757d;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .video-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .video-item:hover .video-controls {
+            opacity: 1;
+        }
+        .quality-selector {
+            padding: 6px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            background: white;
+            color: #495057;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .quality-selector:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+        }
+        .quality-info {
+            color: #6c757d;
+            font-size: 12px;
+            font-weight: 500;
         }
         .video-modal {
             display: none;
@@ -178,46 +230,148 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.9);
+            background: rgba(0,0,0,0.8);
             z-index: 1000;
             justify-content: center;
             align-items: center;
         }
         .modal-content {
             background: white;
-            border-radius: 8px;
-            padding: 20px;
+            border-radius: 12px;
+            overflow: hidden;
             max-width: 90vw;
             max-height: 90vh;
             position: relative;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+        .modal-header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(180deg, rgba(255,255,255,0.95) 0%, transparent 100%);
+            padding: 20px;
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-title {
+            color: #2c3e50;
+            font-size: 18px;
+            font-weight: 600;
         }
         .close-modal {
-            position: absolute;
-            top: 10px;
-            right: 15px;
-            background: none;
-            border: none;
+            background: white;
+            border: 1px solid #dee2e6;
+            color: #6c757d;
             font-size: 24px;
             cursor: pointer;
-            color: #666;
+            padding: 8px;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
         }
         .close-modal:hover {
-            color: #000;
+            background: #f8f9fa;
+            color: #495057;
+            border-color: #adb5bd;
         }
-        .error-message {
-            background: #fee2e2;
-            color: #dc2626;
-            padding: 16px;
-            border-radius: 8px;
-            margin: 20px 0;
+        .video-player {
+            width: 100%;
+            height: 60vh;
+            background: #000;
+        }
+        .modal-controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(0deg, rgba(255,255,255,0.95) 0%, transparent 100%);
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .control-button {
+            background: #007bff;
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        .control-button:hover {
+            background: #0056b3;
+            transform: translateY(-1px);
+        }
+        .progress-bar {
+            flex: 1;
+            height: 6px;
+            background: #e9ecef;
+            border-radius: 3px;
+            position: relative;
+            cursor: pointer;
+        }
+        .progress-fill {
+            height: 100%;
+            background: #007bff;
+            border-radius: 3px;
+            width: 0%;
+            transition: width 0.1s ease;
+        }
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .volume-slider {
+            width: 80px;
+            height: 6px;
+            background: #e9ecef;
+            border-radius: 3px;
+            outline: none;
+            cursor: pointer;
         }
         .no-videos {
             text-align: center;
-            padding: 40px;
-            color: #666;
+            padding: 60px 20px;
+            color: #6c757d;
             background: white;
             border-radius: 12px;
-            font-size: 16px;
+            font-size: 18px;
+            border: 1px solid #e9ecef;
+        }
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #f5c6cb;
+            margin: 20px 0;
+        }
+        .login-prompt {
+            text-align: center;
+            padding: 60px 40px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        .login-prompt h2 {
+            color: #2c3e50;
+            margin-bottom: 16px;
+        }
+        .login-prompt p {
+            color: #6c757d;
+            margin: 20px 0;
         }
     </style>
 </head>
@@ -247,6 +401,8 @@
 
             <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
             <script>
+                let currentVideo = null;
+
                 async function fetchVideos() {
                     try {
                         const userId = '<%= userInfo.sub %>';
@@ -268,7 +424,7 @@
                 function displayVideos(videos) {
                     const container = document.getElementById('videoItems');
                     if (!videos || videos.length === 0) {
-                        container.innerHTML = '<div class="no-videos">No videos available.</div>';
+                        container.innerHTML = '<div class="no-videos">📺 No videos available.<br><span style="font-size: 14px; opacity: 0.7;">Upload your first video to get started</span></div>';
                         return;
                     }
 
@@ -277,43 +433,43 @@
                         const thumbnailUrl = video.thumbnail || '';
                         
                         return `
-                            <div class="video-item">
+                            <div class="video-item" onclick="${hasPlayback ? `playVideo(${index}, '${video.playbackUrls[0]}', '${video.fileName}')` : ''}">
                                 <div class="thumbnail-container">
                                     ${thumbnailUrl ? 
                                         `<img src="${thumbnailUrl}" 
                                              alt="${video.fileName}" 
                                              class="video-thumbnail"
-                                             onload="this.style.opacity='1'; this.nextElementSibling.style.display='none';"
+                                             onload="this.style.opacity='1';"
                                              onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                         <div class="thumbnail-error" style="display: none;">
-                                             <span>📹 Thumbnail not available</span>
+                                         <div style="display: none; align-items: center; justify-content: center; width: 100%; aspect-ratio: 16/9; background: #f8f9fa; color: #6c757d; font-size: 14px;">
+                                             🎬 Thumbnail unavailable
                                          </div>` :
-                                        `<div class="thumbnail-error">
-                                             <span>📹 Processing thumbnail...</span>
+                                        `<div style="display: flex; align-items: center; justify-content: center; width: 100%; aspect-ratio: 16/9; background: #f8f9fa; color: #6c757d; font-size: 14px;">
+                                             🎬 Processing...
                                          </div>`
                                     }
                                     ${hasPlayback ? 
-                                        `<button class="play-button" onclick="playVideo(${index}, '${video.playbackUrls[0]}')">
+                                        `<div class="play-button">
                                             <div class="play-icon"></div>
-                                        </button>` : ''
+                                        </div>` : ''
                                     }
                                 </div>
                                 <div class="video-content">
-                                    <div class="video-status status-${video.status}">${video.status}</div>
                                     <div class="video-title" title="${video.fileName}">${video.fileName}</div>
-                                    <div class="video-details" style="font-size: 12px; color: #666; margin-bottom: 8px;">
-                                        Uploaded: ${new Date(video.uploadedAt).toLocaleDateString()}
+                                    <div class="video-details">
+                                        <div class="video-status status-${video.status}">${video.status}</div>
+                                        <span>${new Date(video.uploadedAt).toLocaleDateString()}</span>
                                     </div>
-                                    <div class="video-controls">
+                                    <div class="video-controls" onclick="event.stopPropagation()">
                                         ${hasPlayback ? 
-                                            `<select id="quality-${index}" class="quality-selector" onchange="changeQuality(${index})">
-                                                <option value="auto">Auto</option>
-                                                <option value="720p">720p</option>
+                                            `<select class="quality-selector" onchange="changeQuality(${index})">
+                                                <option value="auto">Auto Quality</option>
+                                                <option value="720p">720p HD</option>
                                                 <option value="540p">540p</option>
                                                 <option value="360p">360p</option>
                                             </select>
-                                            <span id="current-quality-${index}" class="quality-info">Ready to play</span>` :
-                                            '<span class="quality-info">Video processing...</span>'
+                                            <span class="quality-info">Ready to stream</span>` :
+                                            '<span class="quality-info">Processing video...</span>'
                                         }
                                     </div>
                                 </div>
@@ -321,23 +477,34 @@
                         `;
                     }).join('');
 
-                    // Create modal for video playback
+                    // Create modal
                     if (!document.getElementById('videoModal')) {
                         const modal = document.createElement('div');
                         modal.id = 'videoModal';
                         modal.className = 'video-modal';
                         modal.innerHTML = `
                             <div class="modal-content">
-                                <button class="close-modal" onclick="closeVideoModal()">&times;</button>
+                                <div class="modal-header">
+                                    <div class="modal-title" id="modalTitle"></div>
+                                    <button class="close-modal" onclick="closeVideoModal()">&times;</button>
+                                </div>
                                 <video id="modalVideo" class="video-player" controls></video>
-                                <div class="video-controls">
-                                    <select id="modalQuality" class="quality-selector" onchange="changeModalQuality()">
+                                <div class="modal-controls">
+                                    <button class="control-button" onclick="togglePlay()">⏸️ Pause</button>
+                                    <div class="progress-bar" onclick="seekVideo(event)">
+                                        <div class="progress-fill" id="progressFill"></div>
+                                    </div>
+                                    <select class="quality-selector" onchange="changeModalQuality()">
                                         <option value="auto">Auto</option>
                                         <option value="720p">720p</option>
                                         <option value="540p">540p</option>
                                         <option value="360p">360p</option>
                                     </select>
-                                    <span id="modalCurrentQuality" class="quality-info">Current Quality: Auto</span>
+                                    <div class="volume-control">
+                                        <span>🔊</span>
+                                        <input type="range" class="volume-slider" min="0" max="100" value="100" onchange="changeVolume(this.value)">
+                                    </div>
+                                    <button class="control-button" onclick="toggleFullscreen()">⛶ Fullscreen</button>
                                 </div>
                             </div>
                         `;
@@ -345,11 +512,13 @@
                     }
                 }
 
-                function playVideo(index, playbackUrl) {
-                    console.log('Playing video with URL:', playbackUrl);
+                function playVideo(index, playbackUrl, title) {
+                    console.log('Playing video:', title);
                     const modal = document.getElementById('videoModal');
                     const video = document.getElementById('modalVideo');
+                    const modalTitle = document.getElementById('modalTitle');
                     
+                    modalTitle.textContent = title;
                     modal.style.display = 'flex';
                     
                     if (Hls.isSupported()) {
@@ -367,28 +536,19 @@
                         hls.attachMedia(video);
 
                         hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                            console.log('HLS manifest loaded');
-                        });
-
-                        hls.on(Hls.Events.LEVEL_SWITCHED, (event, data) => {
-                            const currentLevel = hls.levels[data.level];
-                            if (currentLevel) {
-                                const quality = currentLevel.height + 'p';
-                                document.getElementById('modalCurrentQuality').textContent = 
-                                    `Current Quality: ${hls.autoLevelEnabled ? 'Auto (' + quality + ')' : quality}`;
-                            }
-                        });
-
-                        hls.on(Hls.Events.ERROR, (event, data) => {
-                            console.error('HLS error:', data);
+                            console.log('Video ready to play');
+                            video.play();
                         });
 
                         video.hlsInstance = hls;
+                        currentVideo = video;
                     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
                         video.src = playbackUrl;
-                        document.getElementById('modalQuality').style.display = 'none';
-                        document.getElementById('modalCurrentQuality').style.display = 'none';
+                        currentVideo = video;
+                        video.play();
                     }
+
+                    video.addEventListener('timeupdate', updateProgress);
                 }
 
                 function closeVideoModal() {

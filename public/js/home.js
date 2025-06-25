@@ -1,92 +1,4 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>VideoHub - Your Video Library</title>
-    <link rel="stylesheet" href="/css/home.css">
-</head>
-
-<body>
-    <% if (isAuthenticated) { %>
-        <!-- Netflix-style Header -->
-        <header class="netflix-header" id="header">
-            <div class="brand-logo">
-                <div class="brand-icon">🎬</div>
-                <div class="brand-text">Video Dashboard</div>
-            </div>
-            
-            <nav class="nav-menu">
-                <a href="#" class="nav-item active">Home</a>
-                <a href="#" class="nav-item">My List</a>
-                <a href="#" class="nav-item">Recently Added</a>
-            </nav>
-            
-            <div class="user-profile">
-                <div class="user-avatar">
-                    <%= (userInfo.email || userInfo.username || 'U').charAt(0).toUpperCase() %>
-                </div>
-                <div class="user-dropdown">
-                    <button class="dropdown-btn">
-                        <%= userInfo.email || userInfo.username %>
-                        <span style="margin-left: 8px;">▼</span>
-                    </button>
-                    <a href="/logout" class="logout-btn" style="display:inline-block;margin-left:12px;padding:8px 16px;background:#e50914;color:#fff;border:none;border-radius:6px;text-decoration:none;font-weight:600;transition:background 0.2s;">Logout</a>
-                </div>
-            </div>
-        </header>
-
-        <!-- Hero Section -->
-        <section class="hero-section">
-            <div class="hero-content">
-                <h1 class="hero-title">Welcome Back</h1>
-                <p class="hero-subtitle">
-                    Manage your video library with professional tools. 
-                    Upload, process, and stream your content with enterprise-grade quality.
-                </p>
-                <div class="hero-buttons">
-                    <a href="/upload" class="btn-hero btn-primary-hero">
-                        ▶ Upload Video
-                    </a>
-                    <a href="#" class="btn-hero btn-secondary-hero">
-                        ℹ More Info
-                    </a>
-                </div>
-            </div>
-        </section>
-
-        <!-- Content Wrapper -->
-        <div class="content-wrapper">
-            <!-- Recently Uploaded -->
-            <div class="video-carousel">
-                <h2 class="section-title">Recently Uploaded</h2>
-                <div class="video-row" id="recentVideos"></div>
-            </div>
-
-            <!-- Processing Videos -->
-            <div class="video-carousel">
-                <h2 class="section-title">Processing</h2>
-                <div class="video-row" id="processingVideos"></div>
-            </div>
-
-            <!-- Completed Videos -->
-            <div class="video-carousel">
-                <h2 class="section-title">Ready to Stream</h2>
-                <div class="video-row" id="completedVideos"></div>
-            </div>
-        </div>
-
-        <!-- Video Modal -->
-        <div class="video-modal" id="videoModal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button class="close-modal" onclick="closeVideoModal()">×</button>
-                </div>
-                <video id="modalVideo" class="video-player" controls></video>
-            </div>
-        </div>
-
-        <script src="https://cdn.jsdelivr.net/npm/hls.js@1.4.14/dist/hls.min.js"></script>
-        <script>
-            // Header scroll effect
+// Header scroll effect
             window.addEventListener('scroll', () => {
                 const header = document.getElementById('header');
                 if (window.scrollY > 50) {
@@ -157,10 +69,10 @@
                     // Check if video is playable (has playback URL) regardless of status
                     const isPlayable = playbackUrl && playbackUrl.trim() !== '';
 
-                    // Default thumbnail logic
+                    // Loader and fallback logic
                     let thumbnailSrc = video.thumbnail || video.thumbnailUrl;
                     if (!thumbnailSrc || thumbnailSrc.trim() === '') {
-                        thumbnailSrc = '/img/video-processing.png';
+                        thumbnailSrc = '/img/loader.gif';
                     }
 
                     return `
@@ -168,7 +80,7 @@
                             <img src="${thumbnailSrc}" 
                                  alt="${video.fileName}" 
                                  class="video-thumbnail"
-                                 onerror="this.src='/img/video-processing.png'">
+                                 onerror="this.onerror=null;this.src='/img/video-processing.png'">
                             
                             <div class="video-overlay">
                                 <div class="video-info">
@@ -354,11 +266,92 @@
                         <div class="empty-subtitle">Upload your first video to get started</div>
                         <a href="/upload" class="btn-hero btn-primary-hero" style="margin-top: 20px;">
                             ▶ Upload Your First Video
-                        </div>
+                        </a>
                 `;
             }
 
-            // Close modal when clicking outside
+            // Show loader skeletons in all video rows
+function showLoaderSkeletons() {
+    const skeletonHTML = Array(6).fill(`
+        <div class="video-card skeleton">
+            <div class="video-thumbnail-skeleton"></div>
+            <div class="video-info-skeleton">
+                <div class="video-title-skeleton"></div>
+                <div class="video-meta-skeleton"></div>
+            </div>
+        </div>
+    `).join('');
+    document.getElementById('recentVideos').innerHTML = skeletonHTML;
+    document.getElementById('processingVideos').innerHTML = skeletonHTML;
+    document.getElementById('completedVideos').innerHTML = skeletonHTML;
+}
+
+// Remove skeletons (optional, handled by replacing innerHTML in displayNetflixStyleVideos/showEmptyState)
+function removeLoaderSkeletons() {
+    document.getElementById('recentVideos').innerHTML = '';
+    document.getElementById('processingVideos').innerHTML = '';
+    document.getElementById('completedVideos').innerHTML = '';
+}
+
+// Call showLoaderSkeletons before fetching videos
+document.addEventListener('DOMContentLoaded', () => {
+    showLoaderSkeletons();
+    fetchVideos();
+});
+
+// Add CSS for skeletons (inject if not present)
+(function injectSkeletonCSS() {
+    if (document.getElementById('video-skeleton-style')) return;
+    const style = document.createElement('style');
+    style.id = 'video-skeleton-style';
+    style.innerHTML = `
+    .video-card.skeleton {
+        background: #181818;
+        border-radius: 12px;
+        padding: 0;
+        margin: 0 10px 20px 0;
+        width: 220px;
+        min-width: 220px;
+        height: 180px;
+        display: flex;
+        flex-direction: column;
+        box-shadow: none;
+        animation: skeletonPulse 1.5s infinite ease-in-out;
+    }
+    .video-thumbnail-skeleton {
+        width: 100%;
+        height: 120px;
+        background: linear-gradient(90deg, #222 25%, #333 50%, #222 75%);
+        border-radius: 12px 12px 0 0;
+        margin-bottom: 10px;
+        animation: skeletonPulse 1.5s infinite ease-in-out;
+    }
+    .video-info-skeleton {
+        padding: 10px;
+    }
+    .video-title-skeleton, .video-meta-skeleton {
+        height: 14px;
+        background: linear-gradient(90deg, #222 25%, #333 50%, #222 75%);
+        border-radius: 6px;
+        margin-bottom: 8px;
+        animation: skeletonPulse 1.5s infinite ease-in-out;
+    }
+    .video-title-skeleton {
+        width: 70%;
+    }
+    .video-meta-skeleton {
+        width: 40%;
+        margin-bottom: 0;
+    }
+    @keyframes skeletonPulse {
+        0% { background-position: -200px 0; }
+        100% { background-position: 200px 0; }
+    }
+    `;
+    document.head.appendChild(style);
+})();
+
+// Close modal when clicking outside
             document.addEventListener('click', function(event) {
                 const modal = document.getElementById('videoModal');
                 if (event.target === modal) {
@@ -368,91 +361,3 @@
 
             // Fetch videos when page loads
             document.addEventListener('DOMContentLoaded', fetchVideos);
-        </script>
-    <% } else { %>
-        <div class="login-prompt">
-            <div class="login-overlay"></div>
-            
-            <div class="floating-elements">
-                <div class="floating-icon">☁️</div>
-                <div class="floating-icon">🎬</div>
-                <div class="floating-icon">📹</div>
-                <div class="floating-icon">⚡</div>
-                <div class="floating-icon">🎥</div>
-                <div class="floating-icon">📽️</div>
-                <div class="floating-icon">🎞️</div>
-                <div class="floating-icon">🚀</div>
-                <div class="floating-icon">💡</div>
-                <div class="floating-icon">🔧</div>
-            </div>
-
-            <div class="login-container">
-                <div class="login-header">
-                    <div class="aws-logo">🎬</div>
-                    <h1 class="login-title">VideoHub</h1>
-                    <p class="login-subtitle">Professional Video Management Platform</p>
-                </div>
-                
-                <div class="login-body">
-                    <p class="login-description">
-                        Experience the next generation of video management with enterprise-grade security, 
-                        lightning-fast streaming, and professional tools designed for content creators.
-                    </p>
-
-                    <div class="features-grid">
-                        <div class="feature-card">
-                            <span class="feature-card-icon">☁️</span>
-                            <div class="feature-card-title">Cloud Storage</div>
-                            <div class="feature-card-desc">Unlimited secure storage</div>
-                        </div>
-                        <div class="feature-card">
-                            <span class="feature-card-icon">⚡</span>
-                            <div class="feature-card-title">Fast Delivery</div>
-                            <div class="feature-card-desc">Global CDN network</div>
-                        </div>
-                        <div class="feature-card">
-                            <span class="feature-card-icon">🔒</span>
-                            <div class="feature-card-title">Enterprise Security</div>
-                            <div class="feature-card-desc">AWS-grade protection</div>
-                        </div>
-                    </div>
-
-                    <div class="stats-row">
-                        <div class="stat-item">
-                            <span class="stat-number">99.9%</span>
-                            <span class="stat-label">Uptime</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-number">50M+</span>
-                            <span class="stat-label">Videos Served</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-number">150+</span>
-                            <span class="stat-label">Countries</span>
-                        </div>
-                    </div>
-
-                    <a href="/login" class="signin-button">
-                        <span>🚀</span>
-                        Sign in with SS0
-                    </a>
-
-                    <div class="security-notice">
-                        <span class="security-notice-icon">🔒</span>
-                        <span class="security-notice-text">
-                            Secured by Amazon Web Services with enterprise-grade authentication
-                        </span>
-                    </div>
-
-                    <div class="trust-badges">
-                        <span class="trust-badge">🛡️</span>
-                        <span class="trust-badge">⭐</span>
-                        <span class="trust-badge">🏆</span>
-                        <span class="trust-badge">💎</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    <% } %>
-</body>
-</html>

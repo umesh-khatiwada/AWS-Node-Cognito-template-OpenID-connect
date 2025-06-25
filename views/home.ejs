@@ -998,10 +998,12 @@
             }
 
             function handleVideoClick(playbackUrl, title, status, isPlayable) {
-                console.log('Video clicked:', { playbackUrl, title, status, isPlayable }); // Debug log
+                console.log('Video clicked:', { playbackUrl, title, status, isPlayable });
                 
                 if (isPlayable && playbackUrl) {
-                    playVideo(playbackUrl, title);
+                    // Navigate to separate video player page
+                    const playerUrl = `/player?url=${encodeURIComponent(playbackUrl)}&title=${encodeURIComponent(title)}`;
+                    window.open(playerUrl, '_blank');
                 } else if (!playbackUrl) {
                     alert(`Video "${title}" doesn't have a playback URL available yet. Current status: ${status}`);
                 } else {

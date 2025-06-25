@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>VideoHub Player - <%= videoTitle || 'Video Player' %></title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/css/video-player.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            color: white;
+            font-family: 'Netflix Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            overflow: hidden;
+        }
+
+        .player-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+        }
+
+        .player-header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, transparent 100%);
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: opacity 0.3s ease;
+        }
+
+        .player-header.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .back-button {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .back-button:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-1px);
+        }
+
+        .video-title-header {
+            flex: 1;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin: 0 20px;
+            opacity: 0.9;
+        }
+
+        .player-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .action-button {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .action-button:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .main-video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background: #000;
+        }
+
+        .loading-spinner {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 500;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top: 3px solid #e50914;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: #e50914;
+            background: rgba(0,0,0,0.8);
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid rgba(229, 9, 20, 0.3);
+            z-index: 500;
+        }
+
+        .error-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .error-text {
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+        }
+
+        .retry-button {
+            background: #e50914;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s ease;
+        }
+
+        .retry-button:hover {
+            background: #b20710;
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .player-header {
+                padding: 15px 20px;
+            }
+
+            .video-title-header {
+                font-size: 1rem;
+            }
+
+            .back-button {
+                padding: 8px 16px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="player-container">
+        <!-- Header -->
+        <div class="player-header" id="playerHeader">
+            <a href="/" class="back-button">
+                <span>←</span>
+                <span>Back to Library</span>
+            </a>
+            
+            <h1 class="video-title-header" id="videoTitleDisplay">
+                <%= videoTitle || 'Loading...' %>
+            </h1>
+            
+            <div class="player-actions">
+                <button class="action-button" onclick="toggleQuality()" title="Quality Settings">
+                    ⚙️
+                </button>
+                <button class="action-button" onclick="toggleFullscreen()" title="Fullscreen">
+                    ⛶
+                </button>
+            </div>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div class="loading-spinner" id="loadingSpinner">
+            <div class="spinner"></div>
+        </div>
+
+        <!-- Error Message -->
+        <div class="error-message" id="errorMessage" style="display: none;">
+            <div class="error-icon">⚠️</div>
+            <div class="error-text" id="errorText">Failed to load video</div>
+            <button class="retry-button" onclick="retryVideo()">Retry</button>
+        </div>
+
+        <!-- Main Video Element -->
+        <video 
+            id="mainVideo" 
+            class="main-video" 
+            controls
+            preload="metadata"
+            crossorigin="anonymous">
+            <p>Your browser doesn't support HTML5 video.</p>
+        </video>
+    </div>
+
+    <!-- HLS.js Library -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    
+    <script>
+        class VideoPlayerPage {
+            constructor() {
+                this.video = document.getElementById('mainVideo');
+                this.loadingSpinner = document.getElementById('loadingSpinner');
+                this.errorMessage = document.getElementById('errorMessage');
+                this.playerHeader = document.getElementById('playerHeader');
+                this.hlsInstance = null;
+                this.hideHeaderTimeout = null;
+                
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.loadVideoFromURL();
+            }
+
+            setupEventListeners() {
+                // Video events
+                this.video.addEventListener('loadstart', () => this.onLoadStart());
+                this.video.addEventListener('loadeddata', () => this.onLoadedData());
+                this.video.addEventListener('canplay', () => this.onCanPlay());
+                this.video.addEventListener('error', (e) => this.onError(e));
+                this.video.addEventListener('waiting', () => this.onWaiting());
+                this.video.addEventListener('playing', () => this.onPlaying());
+
+                // Mouse/touch events for header auto-hide
+                document.addEventListener('mousemove', () => this.showHeader());
+                document.addEventListener('touchstart', () => this.showHeader());
+                
+                // Keyboard shortcuts
+                document.addEventListener('keydown', (e) => this.handleKeyboard(e));
+
+                // Fullscreen change event
+                document.addEventListener('fullscreenchange', () => this.onFullscreenChange());
+            }
+
+            loadVideoFromURL() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const videoUrl = urlParams.get('url');
+                const videoTitle = urlParams.get('title');
+
+                if (videoTitle) {
+                    document.getElementById('videoTitleDisplay').textContent = videoTitle;
+                    document.title = `VideoHub Player - ${videoTitle}`;
+                }
+
+                if (!videoUrl) {
+                    this.showError('No video URL provided');
+                    return;
+                }
+
+                console.log('Loading video:', videoUrl);
+                this.loadVideo(videoUrl);
+            }
+
+            loadVideo(url) {
+                this.showLoading();
+                this.hideError();
+
+                // Clean up existing HLS instance
+                if (this.hlsInstance) {
+                    this.hlsInstance.destroy();
+                    this.hlsInstance = null;
+                }
+
+                if (url.includes('.m3u8')) {
+                    this.loadHLSVideo(url);
+                } else {
+                    this.loadDirectVideo(url);
+                }
+            }
+
+            loadHLSVideo(url) {
+                if (Hls.isSupported()) {
+                    this.hlsInstance = new Hls({
+                        startLevel: -1,
+                        capLevelToPlayerSize: true,
+                        enableWorker: true,
+                        lowLatencyMode: true,
+                        backBufferLength: 90,
+                        maxBufferLength: 30,
+                        maxMaxBufferLength: 600
+                    });
+
+                    this.hlsInstance.loadSource(url);
+                    this.hlsInstance.attachMedia(this.video);
+
+                    this.hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
+                        console.log('HLS manifest parsed');
+                        this.video.play().catch(e => console.warn('Autoplay failed:', e));
+                    });
+
+                    this.hlsInstance.on(Hls.Events.ERROR, (event, data) => {
+                        console.error('HLS error:', data);
+                        if (data.fatal) {
+                            this.handleHLSError(data);
+                        }
+                    });
+
+                    this.hlsInstance.on(Hls.Events.LEVEL_SWITCHED, (event, data) => {
+                        console.log('Quality level switched:', data.level);
+                    });
+
+                } else if (this.video.canPlayType('application/vnd.apple.mpegurl')) {
+                    console.log('Using native HLS support');
+                    this.video.src = url;
+                    this.video.play().catch(e => console.warn('Native autoplay failed:', e));
+                } else {
+                    this.showError('HLS not supported in this browser');
+                }
+            }
+
+            loadDirectVideo(url) {
+                console.log('Loading direct video');
+                this.video.src = url;
+                this.video.play().catch(e => {
+                    console.warn('Autoplay failed:', e);
+                    this.hideLoading();
+                });
+            }
+
+            handleHLSError(data) {
+                switch (data.type) {
+                    case Hls.ErrorTypes.NETWORK_ERROR:
+                        console.log('Network error, attempting recovery...');
+                        this.hlsInstance.startLoad();
+                        break;
+                    case Hls.ErrorTypes.MEDIA_ERROR:
+                        console.log('Media error, attempting recovery...');
+                        this.hlsInstance.recoverMediaError();
+                        break;
+                    default:
+                        console.log('Fatal error, cannot recover');
+                        this.showError(`Playback error: ${data.details}`);
+                        break;
+                }
+            }
+
+            // Event handlers
+            onLoadStart() {
+                console.log('Video loading started');
+                this.showLoading();
+            }
+
+            onLoadedData() {
+                console.log('Video data loaded');
+                this.hideLoading();
+            }
+
+            onCanPlay() {
+                console.log('Video can play');
+                this.hideLoading();
+            }
+
+            onError(event) {
+                console.error('Video error:', event);
+                this.hideLoading();
+                this.showError('Failed to load video. Please check the video format or try again.');
+            }
+
+            onWaiting() {
+                console.log('Video buffering');
+                this.showLoading();
+            }
+
+            onPlaying() {
+                console.log('Video playing');
+                this.hideLoading();
+                this.hideHeaderDelayed();
+            }
+
+            // UI methods
+            showLoading() {
+                this.loadingSpinner.style.display = 'block';
+            }
+
+            hideLoading() {
+                this.loadingSpinner.style.display = 'none';
+            }
+
+            showError(message) {
+                this.hideLoading();
+                document.getElementById('errorText').textContent = message;
+                this.errorMessage.style.display = 'block';
+            }
+
+            hideError() {
+                this.errorMessage.style.display = 'none';
+            }
+
+            showHeader() {
+                this.playerHeader.classList.remove('hidden');
+                clearTimeout(this.hideHeaderTimeout);
+                this.hideHeaderDelayed();
+            }
+
+            hideHeaderDelayed() {
+                clearTimeout(this.hideHeaderTimeout);
+                this.hideHeaderTimeout = setTimeout(() => {
+                    if (!this.video.paused && !this.video.ended) {
+                        this.playerHeader.classList.add('hidden');
+                    }
+                }, 3000);
+            }
+
+            retryVideo() {
+                this.hideError();
+                this.loadVideoFromURL();
+            }
+
+            handleKeyboard(event) {
+                switch (event.code) {
+                    case 'Space':
+                        event.preventDefault();
+                        if (this.video.paused) {
+                            this.video.play();
+                        } else {
+                            this.video.pause();
+                        }
+                        break;
+                    case 'ArrowLeft':
+                        event.preventDefault();
+                        this.video.currentTime = Math.max(0, this.video.currentTime - 10);
+                        break;
+                    case 'ArrowRight':
+                        event.preventDefault();
+                        this.video.currentTime = Math.min(this.video.duration, this.video.currentTime + 10);
+                        break;
+                    case 'ArrowUp':
+                        event.preventDefault();
+                        this.video.volume = Math.min(1, this.video.volume + 0.1);
+                        break;
+                    case 'ArrowDown':
+                        event.preventDefault();
+                        this.video.volume = Math.max(0, this.video.volume - 0.1);
+                        break;
+                    case 'KeyF':
+                        event.preventDefault();
+                        this.toggleFullscreen();
+                        break;
+                    case 'KeyM':
+                        event.preventDefault();
+                        this.video.muted = !this.video.muted;
+                        break;
+                    case 'Escape':
+                        if (document.fullscreenElement) {
+                            document.exitFullscreen();
+                        }
+                        break;
+                }
+                this.showHeader();
+            }
+
+            onFullscreenChange() {
+                // Update fullscreen button appearance if needed
+                console.log('Fullscreen state changed');
+            }
+        }
+
+        // Global functions for button clicks
+        function toggleFullscreen() {
+            if (document.fullscreenElement) {
+                document.exitFullscreen();
+            } else {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.warn('Fullscreen request failed:', err);
+                });
+            }
+        }
+
+        function toggleQuality() {
+            // Quality selector implementation
+            if (window.player && window.player.hlsInstance) {
+                const levels = window.player.hlsInstance.levels;
+                if (levels.length > 1) {
+                    // Simple quality toggle for now
+                    const currentLevel = window.player.hlsInstance.currentLevel;
+                    const nextLevel = (currentLevel + 1) % levels.length;
+                    window.player.hlsInstance.currentLevel = nextLevel;
+                    console.log(`Quality changed to: ${levels[nextLevel].height}p`);
+                }
+            }
+        }
+
+        function retryVideo() {
+            window.player.retryVideo();
+        }
+
+        // Initialize player when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            window.player = new VideoPlayerPage();
+        });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (window.player && window.player.hlsInstance) {
+                window.player.hlsInstance.destroy();
+            }
+        });
+    </script>
+</body>
+</html>

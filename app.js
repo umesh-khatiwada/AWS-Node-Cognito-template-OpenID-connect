@@ -530,6 +530,28 @@ app.get('/api/videos/:userId', checkAuth, async (req, res) => {
     }
 });
 
+// Video player page route
+app.get('/player', checkAuth, (req, res) => {
+    if (!req.isAuthenticated) {
+        return res.redirect('/login');
+    }
+    
+    const videoUrl = req.query.url;
+    const videoTitle = req.query.title || 'Video Player';
+    
+    if (!videoUrl) {
+        return res.status(400).render('error', { 
+            error: 'No video URL provided' 
+        });
+    }
+    
+    res.render('video-player', {
+        videoUrl: videoUrl,
+        videoTitle: videoTitle,
+        userInfo: req.session.userInfo
+    });
+});
+
 // Start server
 const port = process.env.PORT || 3000;
 initializeClient()

@@ -75,6 +75,37 @@
             transform: translateY(-4px);
             box-shadow: 0 6px 12px rgba(0,0,0,0.1);
         }
+        .video-thumbnail {
+            width: 100%;
+            aspect-ratio: 16/9;
+            object-fit: cover;
+            background: #f0f0f0;
+            transition: opacity 0.3s ease;
+        }
+        .thumbnail-loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #666;
+            font-size: 14px;
+            pointer-events: none;
+        }
+        .thumbnail-container {
+            position: relative;
+            overflow: hidden;
+            background: #f8f9fa;
+        }
+        .thumbnail-error {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: #e9ecef;
+            color: #6c757d;
+            font-size: 14px;
+        }
         .video-content {
             padding: 16px;
         }
@@ -87,44 +118,98 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
+        .video-status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-bottom: 12px;
+        }
+        .status-submitted {
+            background-color: #e0f2fe;
+            color: #0369a1;
+        }
+        .status-processing {
+            background-color: #fef3c7;
+            color: #d97706;
+        }
+        .status-completed {
+            background-color: #d1fae5;
+            color: #047857;
+        }
+        .play-button {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.7);
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .play-button:hover {
+            background: rgba(0,0,0,0.9);
+            transform: translate(-50%, -50%) scale(1.1);
+        }
+        .play-icon {
+            width: 0;
+            height: 0;
+            border-left: 20px solid white;
+            border-top: 12px solid transparent;
+            border-bottom: 12px solid transparent;
+            margin-left: 4px;
+        }
         .video-player {
             width: 100%;
             aspect-ratio: 16/9;
             background: #000;
-            border-radius: 8px 8px 0 0;
         }
-        .video-controls {
-            display: flex;
+        .video-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 1000;
+            justify-content: center;
             align-items: center;
-            gap: 12px;
-            padding: 12px;
-            background: #f8f9fa;
-            border-top: 1px solid #eee;
         }
-        .quality-selector {
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+        .modal-content {
             background: white;
-            color: #444;
-            font-size: 14px;
+            border-radius: 8px;
+            padding: 20px;
+            max-width: 90vw;
+            max-height: 90vh;
+            position: relative;
         }
-        .quality-info {
+        .close-modal {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
             color: #666;
-            font-size: 14px;
         }
-        .login-prompt {
-            text-align: center;
-            padding: 40px;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        .close-modal:hover {
+            color: #000;
         }
-        .section-title {
-            color: #1a73e8;
-            margin: 0 0 20px 0;
-            font-size: 20px;
-            font-weight: 500;
+        .error-message {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 16px;
+            border-radius: 8px;
+            margin: 20px 0;
         }
         .no-videos {
             text-align: center;
@@ -133,13 +218,6 @@
             background: white;
             border-radius: 12px;
             font-size: 16px;
-        }
-        .error-message {
-            background: #fee2e2;
-            color: #dc2626;
-            padding: 16px;
-            border-radius: 8px;
-            margin: 20px 0;
         }
     </style>
 </head>
@@ -181,7 +259,7 @@
                     } catch (error) {
                         console.error('Error fetching videos:', error);
                         document.getElementById('videoItems').innerHTML = `
-                            <div class="error-message" style="color: red; padding: 20px;">
+                            <div class="error-message">
                                 Failed to load videos. Please try again later.
                             </div>`;
                     }
@@ -190,70 +268,145 @@
                 function displayVideos(videos) {
                     const container = document.getElementById('videoItems');
                     if (!videos || videos.length === 0) {
-                        container.innerHTML = '<p>No videos available.</p>';
+                        container.innerHTML = '<div class="no-videos">No videos available.</div>';
                         return;
                     }
 
-                    container.innerHTML = videos.map((video, index) => `
-                        <div class="video-item">
-                            <div class="video-title">${video.fileName}</div>
-                            <div class="video-controls">
-                                <select id="quality-${index}" class="quality-selector" onchange="changeQuality(${index})">
-                                    <option value="auto">Auto</option>
-                                    <option value="720p">720p</option>
-                                    <option value="360p">360p</option>
-                                </select>
-                                <span id="current-quality-${index}">Current Quality: Auto</span>
+                    container.innerHTML = videos.map((video, index) => {
+                        const hasPlayback = video.playbackUrls && video.playbackUrls.length > 0;
+                        const thumbnailUrl = video.thumbnail || '';
+                        
+                        return `
+                            <div class="video-item">
+                                <div class="thumbnail-container">
+                                    ${thumbnailUrl ? 
+                                        `<img src="${thumbnailUrl}" 
+                                             alt="${video.fileName}" 
+                                             class="video-thumbnail"
+                                             onload="this.style.opacity='1'; this.nextElementSibling.style.display='none';"
+                                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                         <div class="thumbnail-error" style="display: none;">
+                                             <span>📹 Thumbnail not available</span>
+                                         </div>` :
+                                        `<div class="thumbnail-error">
+                                             <span>📹 Processing thumbnail...</span>
+                                         </div>`
+                                    }
+                                    ${hasPlayback ? 
+                                        `<button class="play-button" onclick="playVideo(${index}, '${video.playbackUrls[0]}')">
+                                            <div class="play-icon"></div>
+                                        </button>` : ''
+                                    }
+                                </div>
+                                <div class="video-content">
+                                    <div class="video-status status-${video.status}">${video.status}</div>
+                                    <div class="video-title" title="${video.fileName}">${video.fileName}</div>
+                                    <div class="video-details" style="font-size: 12px; color: #666; margin-bottom: 8px;">
+                                        Uploaded: ${new Date(video.uploadedAt).toLocaleDateString()}
+                                    </div>
+                                    <div class="video-controls">
+                                        ${hasPlayback ? 
+                                            `<select id="quality-${index}" class="quality-selector" onchange="changeQuality(${index})">
+                                                <option value="auto">Auto</option>
+                                                <option value="720p">720p</option>
+                                                <option value="540p">540p</option>
+                                                <option value="360p">360p</option>
+                                            </select>
+                                            <span id="current-quality-${index}" class="quality-info">Ready to play</span>` :
+                                            '<span class="quality-info">Video processing...</span>'
+                                        }
+                                    </div>
+                                </div>
                             </div>
-                            <video id="video-${index}" controls style="width: 100%; max-width: 800px;"></video>
-                        </div>
-                    `).join('');
+                        `;
+                    }).join('');
 
-                    videos.forEach((video, index) => {
-                        if (video.playbackUrls && video.playbackUrls.length > 0) {
-                            initializeVideo(video.playbackUrls[0], index);
-                        } else {
-                            document.getElementById(`video-${index}`).innerHTML = 
-                                '<p style="color: #666; text-align: center;">Video playback not available</p>';
-                            document.getElementById(`quality-${index}`).style.display = 'none';
-                            document.getElementById(`current-quality-${index}`).style.display = 'none';
-                        }
-                    });
+                    // Create modal for video playback
+                    if (!document.getElementById('videoModal')) {
+                        const modal = document.createElement('div');
+                        modal.id = 'videoModal';
+                        modal.className = 'video-modal';
+                        modal.innerHTML = `
+                            <div class="modal-content">
+                                <button class="close-modal" onclick="closeVideoModal()">&times;</button>
+                                <video id="modalVideo" class="video-player" controls></video>
+                                <div class="video-controls">
+                                    <select id="modalQuality" class="quality-selector" onchange="changeModalQuality()">
+                                        <option value="auto">Auto</option>
+                                        <option value="720p">720p</option>
+                                        <option value="540p">540p</option>
+                                        <option value="360p">360p</option>
+                                    </select>
+                                    <span id="modalCurrentQuality" class="quality-info">Current Quality: Auto</span>
+                                </div>
+                            </div>
+                        `;
+                        document.body.appendChild(modal);
+                    }
                 }
 
-                function initializeVideo(playbackUrl, index) {
-                    const video = document.getElementById(`video-${index}`);
+                function playVideo(index, playbackUrl) {
+                    console.log('Playing video with URL:', playbackUrl);
+                    const modal = document.getElementById('videoModal');
+                    const video = document.getElementById('modalVideo');
+                    
+                    modal.style.display = 'flex';
+                    
                     if (Hls.isSupported()) {
+                        if (video.hlsInstance) {
+                            video.hlsInstance.destroy();
+                        }
+                        
                         const hls = new Hls({
                             startLevel: -1,
-                            capLevelToPlayerSize: true
+                            capLevelToPlayerSize: true,
+                            debug: false
                         });
 
                         hls.loadSource(playbackUrl);
                         hls.attachMedia(video);
 
+                        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                            console.log('HLS manifest loaded');
+                        });
+
                         hls.on(Hls.Events.LEVEL_SWITCHED, (event, data) => {
                             const currentLevel = hls.levels[data.level];
                             if (currentLevel) {
                                 const quality = currentLevel.height + 'p';
-                                document.getElementById(`current-quality-${index}`).textContent = 
+                                document.getElementById('modalCurrentQuality').textContent = 
                                     `Current Quality: ${hls.autoLevelEnabled ? 'Auto (' + quality + ')' : quality}`;
                             }
                         });
 
-                        // Store hls instance for quality changes
+                        hls.on(Hls.Events.ERROR, (event, data) => {
+                            console.error('HLS error:', data);
+                        });
+
                         video.hlsInstance = hls;
                     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
                         video.src = playbackUrl;
-                        // Hide quality controls for native HLS support
-                        document.getElementById(`quality-${index}`).style.display = 'none';
-                        document.getElementById(`current-quality-${index}`).style.display = 'none';
+                        document.getElementById('modalQuality').style.display = 'none';
+                        document.getElementById('modalCurrentQuality').style.display = 'none';
                     }
                 }
 
-                function changeQuality(index) {
-                    const video = document.getElementById(`video-${index}`);
-                    const quality = document.getElementById(`quality-${index}`).value;
+                function closeVideoModal() {
+                    const modal = document.getElementById('videoModal');
+                    const video = document.getElementById('modalVideo');
+                    
+                    modal.style.display = 'none';
+                    video.pause();
+                    
+                    if (video.hlsInstance) {
+                        video.hlsInstance.destroy();
+                        video.hlsInstance = null;
+                    }
+                }
+
+                function changeModalQuality() {
+                    const video = document.getElementById('modalVideo');
+                    const quality = document.getElementById('modalQuality').value;
                     const hls = video.hlsInstance;
 
                     if (hls) {
@@ -268,6 +421,22 @@
                         }
                     }
                 }
+
+                function initializeVideo(playbackUrl, index) {
+                    // This function is now handled by the modal
+                }
+
+                function changeQuality(index) {
+                    // Individual video quality changes are now handled in modal
+                }
+
+                // Close modal when clicking outside
+                document.addEventListener('click', function(event) {
+                    const modal = document.getElementById('videoModal');
+                    if (event.target === modal) {
+                        closeVideoModal();
+                    }
+                });
 
                 // Fetch videos when page loads
                 document.addEventListener('DOMContentLoaded', fetchVideos);

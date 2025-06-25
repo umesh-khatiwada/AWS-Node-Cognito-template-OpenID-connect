@@ -22,11 +22,13 @@ The system consists of four main Lambda functions orchestrated with S3, MediaCon
 
 ### 2. **Convert Uploaded Media**
 - **File:** `step2_convert_uploaded_media.py`
-- **Purpose:** Converts uploaded videos to HLS format using MediaConvert.
+- **Purpose:** Converts uploaded videos to HLS format using MediaConvert and generates thumbnails.
 - **Trigger:** S3 event (on video upload)
 - **Operations:**
   - Initiates MediaConvert jobs
   - Generates multi-bitrate outputs (e.g., 720p, 360p)
+  - Creates video thumbnails at specific intervals
+  - Stores thumbnail URLs in DynamoDB
 
 ### 3. **MediaPackage Integration**
 - **File:** `step3_use_media_package.py`
@@ -44,6 +46,7 @@ The system consists of four main Lambda functions orchestrated with S3, MediaCon
   - Stores metadata in DynamoDB
   - Provides playback URLs
   - Filters videos per user
+  - Manages thumbnail URLs
 
 ---
 
@@ -71,3 +74,4 @@ Each Lambda function must be assigned an IAM role with permissions to access the
     }
   ]
 }
+````

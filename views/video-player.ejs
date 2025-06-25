@@ -3,7 +3,11 @@
 <head>
     <title>VideoHub Player - <%= videoTitle || 'Video Player' %></title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Video.js CSS -->
+    <link href="https://vjs.zencdn.net/8.6.1/video-js.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/video-player.css">
+    
     <style>
         body {
             margin: 0;
@@ -90,72 +94,38 @@
             background: rgba(255,255,255,0.2);
         }
 
-        .main-video {
+        /* Video.js Netflix Theme */
+        .video-js {
             width: 100%;
             height: 100%;
-            object-fit: contain;
-            background: #000;
+            font-family: 'Netflix Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #000;
         }
 
-        .loading-spinner {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 500;
-        }
-
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 3px solid rgba(255,255,255,0.3);
-            border-top: 3px solid #e50914;
+        .video-js .vjs-big-play-button {
+            font-size: 2em;
+            line-height: 2;
+            height: 2em;
+            width: 2em;
             border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .error-message {
-            position: absolute;
+            background-color: rgba(229, 9, 20, 0.9);
+            border: 2px solid white;
             top: 50%;
             left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            color: #e50914;
-            background: rgba(0,0,0,0.8);
-            padding: 30px;
-            border-radius: 12px;
-            border: 1px solid rgba(229, 9, 20, 0.3);
-            z-index: 500;
+            margin-top: -1em;
+            margin-left: -1em;
+            transition: all 0.3s ease;
         }
 
-        .error-icon {
-            font-size: 3rem;
-            margin-bottom: 15px;
+        .video-js .vjs-big-play-button:hover {
+            background-color: #e50914;
+            transform: scale(1.1);
         }
 
-        .error-text {
-            font-size: 1.1rem;
-            margin-bottom: 20px;
-        }
-
-        .retry-button {
-            background: #e50914;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: background 0.3s ease;
-        }
-
-        .retry-button:hover {
-            background: #b20710;
+        .video-js .vjs-control-bar {
+            background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.8) 100%);
+            height: 4em;
+            padding: 0 1em;
         }
 
         /* Mobile responsiveness */
@@ -189,83 +159,49 @@
             </h1>
             
             <div class="player-actions">
-                <button class="action-button" onclick="toggleQuality()" title="Quality Settings">
-                    ⚙️
-                </button>
                 <button class="action-button" onclick="toggleFullscreen()" title="Fullscreen">
                     ⛶
                 </button>
             </div>
         </div>
 
-        <!-- Loading Spinner -->
-        <div class="loading-spinner" id="loadingSpinner">
-            <div class="spinner"></div>
-        </div>
-
-        <!-- Error Message -->
-        <div class="error-message" id="errorMessage" style="display: none;">
-            <div class="error-icon">⚠️</div>
-            <div class="error-text" id="errorText">Failed to load video</div>
-            <button class="retry-button" onclick="retryVideo()">Retry</button>
-        </div>
-
-        <!-- Main Video Element -->
-        <video 
-            id="mainVideo" 
-            class="main-video" 
+        <!-- Video.js Player -->
+        <video
+            id="netflix-player"
+            class="video-js vjs-default-skin"
             controls
-            preload="metadata"
-            crossorigin="anonymous">
-            <p>Your browser doesn't support HTML5 video.</p>
+            preload="auto"
+            data-setup='{}'>
+            <p class="vjs-no-js">
+                To view this video please enable JavaScript, and consider upgrading to a web browser that
+                <a href="https://videojs.com/html5-video-support/" target="_blank">supports HTML5 video</a>.
+            </p>
         </video>
     </div>
 
-    <!-- HLS.js Library -->
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <!-- Video.js JavaScript -->
+    <script src="https://vjs.zencdn.net/8.6.1/video.min.js"></script>
     
     <script>
-        class VideoPlayerPage {
+        class NetflixVideoPlayer {
             constructor() {
-                this.video = document.getElementById('mainVideo');
-                this.loadingSpinner = document.getElementById('loadingSpinner');
-                this.errorMessage = document.getElementById('errorMessage');
+                this.player = null;
                 this.playerHeader = document.getElementById('playerHeader');
-                this.hlsInstance = null;
                 this.hideHeaderTimeout = null;
                 
                 this.init();
             }
 
             init() {
-                this.setupEventListeners();
                 this.loadVideoFromURL();
-            }
-
-            setupEventListeners() {
-                // Video events
-                this.video.addEventListener('loadstart', () => this.onLoadStart());
-                this.video.addEventListener('loadeddata', () => this.onLoadedData());
-                this.video.addEventListener('canplay', () => this.onCanPlay());
-                this.video.addEventListener('error', (e) => this.onError(e));
-                this.video.addEventListener('waiting', () => this.onWaiting());
-                this.video.addEventListener('playing', () => this.onPlaying());
-
-                // Mouse/touch events for header auto-hide
-                document.addEventListener('mousemove', () => this.showHeader());
-                document.addEventListener('touchstart', () => this.showHeader());
-                
-                // Keyboard shortcuts
-                document.addEventListener('keydown', (e) => this.handleKeyboard(e));
-
-                // Fullscreen change event
-                document.addEventListener('fullscreenchange', () => this.onFullscreenChange());
             }
 
             loadVideoFromURL() {
                 const urlParams = new URLSearchParams(window.location.search);
                 const videoUrl = urlParams.get('url');
                 const videoTitle = urlParams.get('title');
+
+                console.log('Loading video:', { videoUrl, videoTitle });
 
                 if (videoTitle) {
                     document.getElementById('videoTitleDisplay').textContent = videoTitle;
@@ -277,143 +213,205 @@
                     return;
                 }
 
-                console.log('Loading video:', videoUrl);
-                this.loadVideo(videoUrl);
+                // Decode the URL in case it's double-encoded
+                const decodedUrl = decodeURIComponent(videoUrl);
+                console.log('Decoded video URL:', decodedUrl);
+
+                this.initializePlayer(decodedUrl);
             }
 
-            loadVideo(url) {
-                this.showLoading();
-                this.hideError();
+            initializePlayer(videoUrl) {
+                try {
+                    console.log('Initializing player with URL:', videoUrl);
+                    
+                    // Initialize Video.js player with better error handling
+                    this.player = videojs('netflix-player', {
+                        fluid: false,
+                        responsive: false,
+                        fill: true,
+                        playbackRates: [0.5, 0.75, 1, 1.25, 1.5, 2],
+                        controls: true,
+                        preload: 'auto',
+                        autoplay: false,
+                        html5: {
+                            hls: {
+                                enableLowInitialPlaylist: true,
+                                smoothQualityChange: true,
+                                overrideNative: true
+                            },
+                            vhs: {
+                                overrideNative: true,
+                                enableLowInitialPlaylist: true,
+                                smoothQualityChange: true
+                            }
+                        },
+                        sources: [{
+                            src: videoUrl,
+                            type: this.getVideoType(videoUrl)
+                        }],
+                        techOrder: ['html5']
+                    });
 
-                // Clean up existing HLS instance
-                if (this.hlsInstance) {
-                    this.hlsInstance.destroy();
-                    this.hlsInstance = null;
+                    this.setupPlayerEvents();
+                    this.setupKeyboardShortcuts();
+                    this.setupMouseEvents();
+                    
+                } catch (error) {
+                    console.error('Error initializing player:', error);
+                    this.showError('Failed to initialize video player: ' + error.message);
                 }
+            }
 
+            getVideoType(url) {
                 if (url.includes('.m3u8')) {
-                    this.loadHLSVideo(url);
+                    return 'application/x-mpegURL';
+                } else if (url.includes('.mp4')) {
+                    return 'video/mp4';
+                } else if (url.includes('.webm')) {
+                    return 'video/webm';
+                } else if (url.includes('.mov')) {
+                    return 'video/quicktime';
                 } else {
-                    this.loadDirectVideo(url);
+                    return 'application/x-mpegURL'; // Default to HLS
                 }
             }
 
-            loadHLSVideo(url) {
-                if (Hls.isSupported()) {
-                    this.hlsInstance = new Hls({
-                        startLevel: -1,
-                        capLevelToPlayerSize: true,
-                        enableWorker: true,
-                        lowLatencyMode: true,
-                        backBufferLength: 90,
-                        maxBufferLength: 30,
-                        maxMaxBufferLength: 600
-                    });
+            setupPlayerEvents() {
+                this.player.ready(() => {
+                    console.log('Player is ready');
+                    this.hideHeaderDelayed();
+                    
+                    // Try to load the video
+                    this.player.load();
+                });
 
-                    this.hlsInstance.loadSource(url);
-                    this.hlsInstance.attachMedia(this.video);
+                this.player.on('loadstart', () => {
+                    console.log('Video loading started');
+                });
 
-                    this.hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
-                        console.log('HLS manifest parsed');
-                        this.video.play().catch(e => console.warn('Autoplay failed:', e));
-                    });
+                this.player.on('loadedmetadata', () => {
+                    console.log('Video metadata loaded');
+                    console.log('Duration:', this.player.duration());
+                });
 
-                    this.hlsInstance.on(Hls.Events.ERROR, (event, data) => {
-                        console.error('HLS error:', data);
-                        if (data.fatal) {
-                            this.handleHLSError(data);
+                this.player.on('canplay', () => {
+                    console.log('Video can start playing');
+                });
+
+                this.player.on('play', () => {
+                    console.log('Video started playing');
+                    this.hideHeaderDelayed();
+                });
+
+                this.player.on('pause', () => {
+                    console.log('Video paused');
+                    this.showHeader();
+                });
+
+                this.player.on('ended', () => {
+                    console.log('Video ended');
+                    this.showHeader();
+                });
+
+                this.player.on('error', (event) => {
+                    const error = this.player.error();
+                    console.error('Player error event:', event);
+                    console.error('Player error details:', error);
+                    
+                    let errorMessage = 'Failed to load video.';
+                    if (error) {
+                        switch (error.code) {
+                            case 1:
+                                errorMessage = 'Video loading was aborted.';
+                                break;
+                            case 2:
+                                errorMessage = 'Network error occurred while loading video.';
+                                break;
+                            case 3:
+                                errorMessage = 'Video decoding error.';
+                                break;
+                            case 4:
+                                errorMessage = 'Video format not supported.';
+                                break;
+                            default:
+                                errorMessage = `Video error (${error.code}): ${error.message || 'Unknown error'}`;
                         }
-                    });
+                    }
+                    
+                    this.showError(errorMessage);
+                });
 
-                    this.hlsInstance.on(Hls.Events.LEVEL_SWITCHED, (event, data) => {
-                        console.log('Quality level switched:', data.level);
-                    });
+                this.player.on('waiting', () => {
+                    console.log('Video is buffering');
+                });
 
-                } else if (this.video.canPlayType('application/vnd.apple.mpegurl')) {
-                    console.log('Using native HLS support');
-                    this.video.src = url;
-                    this.video.play().catch(e => console.warn('Native autoplay failed:', e));
-                } else {
-                    this.showError('HLS not supported in this browser');
-                }
-            }
+                this.player.on('playing', () => {
+                    console.log('Video is playing after buffering');
+                });
 
-            loadDirectVideo(url) {
-                console.log('Loading direct video');
-                this.video.src = url;
-                this.video.play().catch(e => {
-                    console.warn('Autoplay failed:', e);
-                    this.hideLoading();
+                // Add additional debugging for HLS
+                this.player.ready(() => {
+                    if (this.player.tech_ && this.player.tech_.hls) {
+                        console.log('HLS tech available');
+                        this.player.tech_.hls.on('hlsError', (event, data) => {
+                            console.error('HLS Error:', data);
+                        });
+                    }
                 });
             }
 
-            handleHLSError(data) {
-                switch (data.type) {
-                    case Hls.ErrorTypes.NETWORK_ERROR:
-                        console.log('Network error, attempting recovery...');
-                        this.hlsInstance.startLoad();
-                        break;
-                    case Hls.ErrorTypes.MEDIA_ERROR:
-                        console.log('Media error, attempting recovery...');
-                        this.hlsInstance.recoverMediaError();
-                        break;
-                    default:
-                        console.log('Fatal error, cannot recover');
-                        this.showError(`Playback error: ${data.details}`);
-                        break;
-                }
+            setupKeyboardShortcuts() {
+                document.addEventListener('keydown', (e) => {
+                    if (!this.player) return;
+
+                    switch (e.code) {
+                        case 'Space':
+                            e.preventDefault();
+                            if (this.player.paused()) {
+                                this.player.play().catch(err => console.error('Play failed:', err));
+                            } else {
+                                this.player.pause();
+                            }
+                            break;
+                        case 'ArrowLeft':
+                            e.preventDefault();
+                            this.player.currentTime(Math.max(0, this.player.currentTime() - 10));
+                            this.showSkipIndicator('-10s');
+                            break;
+                        case 'ArrowRight':
+                            e.preventDefault();
+                            this.player.currentTime(Math.min(this.player.duration(), this.player.currentTime() + 10));
+                            this.showSkipIndicator('+10s');
+                            break;
+                        case 'KeyF':
+                            e.preventDefault();
+                            if (this.player.isFullscreen()) {
+                                this.player.exitFullscreen();
+                            } else {
+                                this.player.requestFullscreen();
+                            }
+                            break;
+                        case 'KeyM':
+                            e.preventDefault();
+                            this.player.muted(!this.player.muted());
+                            break;
+                    }
+                    this.showHeader();
+                });
             }
 
-            // Event handlers
-            onLoadStart() {
-                console.log('Video loading started');
-                this.showLoading();
-            }
-
-            onLoadedData() {
-                console.log('Video data loaded');
-                this.hideLoading();
-            }
-
-            onCanPlay() {
-                console.log('Video can play');
-                this.hideLoading();
-            }
-
-            onError(event) {
-                console.error('Video error:', event);
-                this.hideLoading();
-                this.showError('Failed to load video. Please check the video format or try again.');
-            }
-
-            onWaiting() {
-                console.log('Video buffering');
-                this.showLoading();
-            }
-
-            onPlaying() {
-                console.log('Video playing');
-                this.hideLoading();
-                this.hideHeaderDelayed();
-            }
-
-            // UI methods
-            showLoading() {
-                this.loadingSpinner.style.display = 'block';
-            }
-
-            hideLoading() {
-                this.loadingSpinner.style.display = 'none';
-            }
-
-            showError(message) {
-                this.hideLoading();
-                document.getElementById('errorText').textContent = message;
-                this.errorMessage.style.display = 'block';
-            }
-
-            hideError() {
-                this.errorMessage.style.display = 'none';
+            setupMouseEvents() {
+                document.addEventListener('mousemove', () => this.showHeader());
+                document.addEventListener('touchstart', () => this.showHeader());
+                
+                // Click on player to toggle play/pause
+                this.player.on('click', () => {
+                    if (this.player.paused()) {
+                        this.player.play().catch(err => console.error('Play failed:', err));
+                    } else {
+                        this.player.pause();
+                    }
+                });
             }
 
             showHeader() {
@@ -425,104 +423,122 @@
             hideHeaderDelayed() {
                 clearTimeout(this.hideHeaderTimeout);
                 this.hideHeaderTimeout = setTimeout(() => {
-                    if (!this.video.paused && !this.video.ended) {
+                    if (this.player && !this.player.paused() && !this.player.ended()) {
                         this.playerHeader.classList.add('hidden');
                     }
                 }, 3000);
             }
 
-            retryVideo() {
-                this.hideError();
-                this.loadVideoFromURL();
+            showSkipIndicator(text) {
+                const indicator = document.createElement('div');
+                indicator.textContent = text;
+                indicator.style.cssText = `
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: rgba(0,0,0,0.8);
+                    color: white;
+                    padding: 10px 20px;
+                    border-radius: 4px;
+                    font-size: 1.2rem;
+                    font-weight: bold;
+                    z-index: 1001;
+                    pointer-events: none;
+                    animation: fadeInOut 1s ease-in-out;
+                `;
+                
+                document.body.appendChild(indicator);
+                
+                setTimeout(() => {
+                    if (indicator.parentNode) {
+                        indicator.parentNode.removeChild(indicator);
+                    }
+                }, 1000);
             }
 
-            handleKeyboard(event) {
-                switch (event.code) {
-                    case 'Space':
-                        event.preventDefault();
-                        if (this.video.paused) {
-                            this.video.play();
-                        } else {
-                            this.video.pause();
-                        }
-                        break;
-                    case 'ArrowLeft':
-                        event.preventDefault();
-                        this.video.currentTime = Math.max(0, this.video.currentTime - 10);
-                        break;
-                    case 'ArrowRight':
-                        event.preventDefault();
-                        this.video.currentTime = Math.min(this.video.duration, this.video.currentTime + 10);
-                        break;
-                    case 'ArrowUp':
-                        event.preventDefault();
-                        this.video.volume = Math.min(1, this.video.volume + 0.1);
-                        break;
-                    case 'ArrowDown':
-                        event.preventDefault();
-                        this.video.volume = Math.max(0, this.video.volume - 0.1);
-                        break;
-                    case 'KeyF':
-                        event.preventDefault();
-                        this.toggleFullscreen();
-                        break;
-                    case 'KeyM':
-                        event.preventDefault();
-                        this.video.muted = !this.video.muted;
-                        break;
-                    case 'Escape':
-                        if (document.fullscreenElement) {
-                            document.exitFullscreen();
-                        }
-                        break;
+            showError(message) {
+                console.error('Showing error:', message);
+                
+                // Create error overlay
+                const errorOverlay = document.createElement('div');
+                errorOverlay.style.cssText = `
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0,0,0,0.9);
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 2000;
+                    color: white;
+                    text-align: center;
+                    padding: 20px;
+                `;
+                
+                errorOverlay.innerHTML = `
+                    <div style="font-size: 3rem; margin-bottom: 20px; color: #e50914;">⚠️</div>
+                    <h2 style="margin-bottom: 20px; font-size: 1.5rem;">Video Player Error</h2>
+                    <p style="margin-bottom: 30px; font-size: 1.1rem; max-width: 600px; line-height: 1.5;">${message}</p>
+                    <button onclick="window.history.back()" style="
+                        background: #e50914;
+                        color: white;
+                        border: none;
+                        padding: 12px 24px;
+                        border-radius: 6px;
+                        font-size: 1rem;
+                        cursor: pointer;
+                        transition: background 0.3s ease;
+                    " onmouseover="this.style.background='#f40612'" onmouseout="this.style.background='#e50914'">
+                        ← Go Back
+                    </button>
+                `;
+                
+                document.body.appendChild(errorOverlay);
+            }
+
+            destroy() {
+                if (this.player) {
+                    this.player.dispose();
                 }
-                this.showHeader();
-            }
-
-            onFullscreenChange() {
-                // Update fullscreen button appearance if needed
-                console.log('Fullscreen state changed');
             }
         }
 
-        // Global functions for button clicks
         function toggleFullscreen() {
-            if (document.fullscreenElement) {
-                document.exitFullscreen();
-            } else {
-                document.documentElement.requestFullscreen().catch(err => {
-                    console.warn('Fullscreen request failed:', err);
-                });
-            }
-        }
-
-        function toggleQuality() {
-            // Quality selector implementation
-            if (window.player && window.player.hlsInstance) {
-                const levels = window.player.hlsInstance.levels;
-                if (levels.length > 1) {
-                    // Simple quality toggle for now
-                    const currentLevel = window.player.hlsInstance.currentLevel;
-                    const nextLevel = (currentLevel + 1) % levels.length;
-                    window.player.hlsInstance.currentLevel = nextLevel;
-                    console.log(`Quality changed to: ${levels[nextLevel].height}p`);
+            if (window.netflixPlayer && window.netflixPlayer.player) {
+                if (window.netflixPlayer.player.isFullscreen()) {
+                    window.netflixPlayer.player.exitFullscreen();
+                } else {
+                    window.netflixPlayer.player.requestFullscreen();
                 }
             }
         }
 
-        function retryVideo() {
-            window.player.retryVideo();
-        }
+        // Add fade animation for skip indicator
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeInOut {
+                0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+                20% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+                80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+                100% { opacity: 0; transform: translate(-50%, -50%) scale(1.1); }
+            }
+        `;
+        document.head.appendChild(style);
 
         // Initialize player when page loads
         document.addEventListener('DOMContentLoaded', () => {
-            window.player = new VideoPlayerPage();
+            console.log('DOM loaded, initializing player...');
+            window.netflixPlayer = new NetflixVideoPlayer();
         });
 
         // Cleanup on page unload
         window.addEventListener('beforeunload', () => {
-            if (window.player && window.player.hlsInstance) {
-                window.player.hlsInstance.destroy();
+            if (window.netflixPlayer) {
+                window.netflixPlayer.destroy();
             }
         });
     </script>

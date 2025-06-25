@@ -60,6 +60,21 @@ const axiosInstance = axios.create({
 // Configure view engine
 app.set('view engine', 'ejs');
 
+// Serve static files
+app.use(express.static('public'));
+
+// Body parsing middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Add CORS headers for video streaming
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    next();
+});
+
 // Configure session middleware
 app.use(session({
     secret: process.env.SESSION_SECRET,
@@ -544,6 +559,8 @@ app.get('/player', checkAuth, (req, res) => {
             error: 'No video URL provided' 
         });
     }
+    
+    console.log('Video player request:', { videoUrl, videoTitle }); // Debug log
     
     res.render('video-player', {
         videoUrl: videoUrl,

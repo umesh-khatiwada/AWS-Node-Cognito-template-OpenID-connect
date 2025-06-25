@@ -1,26 +1,12 @@
 {
-  "name": "aws-video-management-platform",
+  "name": "videohub",
   "version": "1.0.0",
-  "description": "A comprehensive video management platform built with AWS Cognito authentication, S3 storage, and professional streaming capabilities.",
+  "description": "Professional Video Management Platform",
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
-    "dev": "nodemon app.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "nodemon app.js"
   },
-  "keywords": [
-    "aws",
-    "cognito",
-    "video-streaming",
-    "s3",
-    "lambda",
-    "mediaconvert",
-    "nodejs",
-    "express",
-    "video-management"
-  ],
-  "author": "Video Management Team",
-  "license": "MIT",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.828.0",
     "@aws-sdk/s3-request-presigner": "^3.828.0",
@@ -41,17 +27,15 @@
     "request": "^2.88.2"
   },
   "devDependencies": {
-    "nodemon": "^3.0.2"
+    "nodemon": "^3.0.1"
   },
-  "engines": {
-    "node": ">=18.0.0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/your-org/video-management-platform.git"
-  },
-  "bugs": {
-    "url": "https://github.com/your-org/video-management-platform/issues"
-  },
-  "homepage": "https://github.com/your-org/video-management-platform#readme"
+  "keywords": [
+    "video",
+    "streaming",
+    "aws",
+    "s3",
+    "cognito"
+  ],
+  "author": "VideoHub Team",
+  "license": "MIT"
 }

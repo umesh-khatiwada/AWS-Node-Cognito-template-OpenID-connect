@@ -1003,6 +1003,7 @@
                 if (isPlayable && playbackUrl) {
                     // Navigate to separate video player page
                     const playerUrl = `/player?url=${encodeURIComponent(playbackUrl)}&title=${encodeURIComponent(title)}`;
+                    console.log('Opening player URL:', playerUrl); // Debug log
                     window.open(playerUrl, '_blank');
                 } else if (!playbackUrl) {
                     alert(`Video "${title}" doesn't have a playback URL available yet. Current status: ${status}`);
@@ -1010,7 +1011,7 @@
                     alert(`Video "${title}" is still processing. Current status: ${status}. Please wait for processing to complete.`);
                 }
             }
-
+    
             function playVideo(playbackUrl, title) {
                 console.log('Attempting to play video:', playbackUrl); // Debug log
                 

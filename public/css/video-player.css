@@ -3,11 +3,11 @@
     position: absolute;
     top: 20px;
     left: 20px;
-    background: rgba(0,0,0,0.8);
+    background: rgba(0, 0, 0, 0.8);
     padding: 15px 20px;
     border-radius: 8px;
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255,255,255,0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     opacity: 0;
     transition: opacity 0.3s ease;
     z-index: 100;
@@ -35,7 +35,7 @@
     bottom: 0;
     left: 0;
     right: 0;
-    background: linear-gradient(transparent, rgba(0,0,0,0.8));
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
     padding: 40px 20px 20px;
     opacity: 0;
     transition: opacity 0.3s ease;
@@ -72,8 +72,8 @@
 }
 
 .control-btn {
-    background: rgba(255,255,255,0.1);
-    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     color: white;
     width: 40px;
     height: 40px;
@@ -87,7 +87,7 @@
 }
 
 .control-btn:hover {
-    background: rgba(255,255,255,0.2);
+    background: rgba(255, 255, 255, 0.2);
     transform: scale(1.1);
 }
 
@@ -111,7 +111,7 @@
 .volume-slider {
     width: 80px;
     height: 4px;
-    background: rgba(255,255,255,0.3);
+    background: rgba(255, 255, 255, 0.3);
     border-radius: 2px;
     outline: none;
     -webkit-appearance: none;
@@ -147,8 +147,8 @@
 }
 
 .playback-rate-select {
-    background: rgba(255,255,255,0.1);
-    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     color: white;
     padding: 8px 12px;
     border-radius: 6px;
@@ -171,29 +171,28 @@
     position: relative;
     width: 100%;
     height: 6px;
-    background: rgba(255,255,255,0.3);
+    background: rgba(255, 255, 255, 0.3);
     border-radius: 3px;
     cursor: pointer;
     overflow: hidden;
 }
 
-.progress-buffer {
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100%;
-    background: rgba(255,255,255,0.5);
-    border-radius: 3px;
-    transition: width 0.2s ease;
-}
-
+.progress-buffer,
 .progress-played {
     position: absolute;
     top: 0;
     left: 0;
     height: 100%;
-    background: #e50914;
     border-radius: 3px;
+    transition: width 0.2s ease;
+}
+
+.progress-buffer {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.progress-played {
+    background: #e50914;
     transition: width 0.1s ease;
 }
 
@@ -208,38 +207,166 @@
     transform: translate(-50%, -50%);
     cursor: pointer;
     transition: left 0.1s ease;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
-/* Responsive Design */
+/* Netflix-style Enhancements */
+@keyframes netflixPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.vjs-loading-spinner {
+    animation: netflixPulse 1.5s ease-in-out infinite;
+}
+
+.video-js .vjs-control-bar {
+    background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.9) 100%);
+    backdrop-filter: blur(5px);
+    transition: opacity 0.3s ease;
+}
+
+.video-js:hover .vjs-control-bar {
+    opacity: 1;
+}
+
+.video-js .vjs-progress-control .vjs-progress-holder {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+}
+
+.video-js .vjs-progress-control .vjs-play-progress {
+    background-color: #e50914;
+    border-radius: 2px;
+}
+
+.video-js .vjs-progress-control .vjs-play-progress:before {
+    background-color: #e50914;
+    border-radius: 50%;
+    width: 12px;
+    height: 12px;
+    top: -5px;
+    right: -6px;
+}
+
+.video-js .vjs-volume-control {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    padding: 0.5em;
+}
+
+.video-js .vjs-volume-bar {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+}
+
+.video-js .vjs-volume-level {
+    background: #e50914;
+    border-radius: 2px;
+}
+
+.video-js .vjs-button {
+    color: white;
+    transition: all 0.2s ease;
+    border-radius: 4px;
+    margin: 0 2px;
+}
+
+.video-js .vjs-button:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(1.1);
+}
+
+.video-js.vjs-fullscreen {
+    background: #000;
+}
+
+.video-js.vjs-fullscreen .vjs-control-bar {
+    background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.95) 100%);
+}
+
+.video-js .vjs-error-display {
+    background: rgba(0, 0, 0, 0.95);
+    backdrop-filter: blur(10px);
+}
+
+.video-js .vjs-error-display .vjs-modal-dialog-content {
+    color: #e50914;
+    text-align: center;
+    padding: 2em;
+    border-radius: 8px;
+    border: 1px solid rgba(229, 9, 20, 0.3);
+}
+
+/* Mobile Optimizations */
 @media (max-width: 768px) {
-    .video-controls {
-        flex-direction: column;
-        gap: 15px;
+    .video-js .vjs-control-bar {
+        font-size: 1em;
+        height: 44px;
     }
 
-    .control-group {
-        width: 100%;
-        justify-content: center;
+    .video-js .vjs-button {
+        padding: 0.3em;
     }
 
-    .control-group.left {
-        order: 2;
+    .video-js .vjs-progress-control {
+        height: 6px;
     }
 
-    .control-group.center {
-        order: 1;
+    .video-js .vjs-big-play-button {
+        font-size: 1.5em;
+        height: 1.5em;
+        width: 1.5em;
+        margin-top: -0.75em;
+        margin-left: -0.75em;
+    }
+}
+
+/* Touch Device Optimizations */
+@media (pointer: coarse) {
+    .video-js .vjs-button {
+        min-width: 44px;
+        min-height: 44px;
     }
 
-    .control-group.right {
-        order: 3;
+    .video-js .vjs-progress-control .vjs-progress-holder {
+        height: 8px;
     }
 
-    .volume-slider-container {
-        margin: 0;
+    .video-js .vjs-progress-control .vjs-play-progress:before {
+        width: 16px;
+        height: 16px;
+        top: -4px;
+        right: -8px;
     }
+}
 
-    .time-display {
-        margin: 0;
-    }
+/* Dark Theme Enhancements */
+.video-js {
+    color: white;
+}
+
+.video-js .vjs-slider {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.video-js .vjs-slider-bar {
+    background-color: #e50914;
+}
+
+/* Custom Context Menu */
+.video-js .vjs-contextmenu-ui-menu {
+    background: rgba(0, 0, 0, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    backdrop-filter: blur(10px);
+}
+
+.video-js .vjs-contextmenu-ui-item {
+    color: white;
+    padding: 8px 16px;
+}
+
+.video-js .vjs-contextmenu-ui-item:hover {
+    background: rgba(229, 9, 20, 0.2);
 }

@@ -298,6 +298,52 @@
     border: 1px solid rgba(229, 9, 20, 0.3);
 }
 
+/* Enhanced Video.js Big Play Button */
+.video-js .vjs-big-play-button {
+    font-size: 3em;
+    line-height: 2;
+    height: 2em;
+    width: 2em;
+    border-radius: 50%;
+    background-color: rgba(229, 9, 20, 0.9) !important;
+    border: 3px solid white !important;
+    top: 50% !important;
+    left: 50% !important;
+    margin-top: -1em !important;
+    margin-left: -1em !important;
+    transition: all 0.3s ease !important;
+    z-index: 1000 !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    display: block !important;
+    opacity: 1 !important;
+}
+
+.video-js .vjs-big-play-button:hover {
+    background-color: #e50914 !important;
+    transform: scale(1.1) !important;
+    box-shadow: 0 0 20px rgba(229, 9, 20, 0.5) !important;
+}
+
+.video-js .vjs-big-play-button:focus {
+    outline: 2px solid white !important;
+    outline-offset: 4px !important;
+}
+
+.video-js .vjs-big-play-button .vjs-icon-placeholder:before {
+    color: white !important;
+    font-size: 1em !important;
+    line-height: 2 !important;
+}
+
+/* Ensure the big play button is always visible when needed */
+.video-js.vjs-paused .vjs-big-play-button,
+.video-js:not(.vjs-has-started) .vjs-big-play-button {
+    display: block !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
+
 /* Mobile Optimizations */
 @media (max-width: 768px) {
     .video-js .vjs-control-bar {
@@ -369,4 +415,182 @@
 
 .video-js .vjs-contextmenu-ui-item:hover {
     background: rgba(229, 9, 20, 0.2);
+}
+
+/* YouTube-style Video Player Enhancements */
+
+/* Loading animation */
+@keyframes pulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+}
+
+.vjs-loading-spinner {
+    animation: pulse 1.5s ease-in-out infinite;
+    border-color: #ff0000 transparent transparent transparent;
+}
+
+/* Enhanced Video.js styling for YouTube look */
+.video-js {
+    font-family: 'YouTube Sans', 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+    background-color: #000 !important;
+}
+
+.video-js .vjs-tech {
+    outline: none;
+}
+
+/* Progress bar styling */
+.video-js .vjs-progress-control .vjs-progress-holder {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    height: 4px !important;
+    border-radius: 2px !important;
+}
+
+.video-js .vjs-progress-control .vjs-play-progress {
+    background-color: #ff0000 !important;
+    border-radius: 2px !important;
+}
+
+.video-js .vjs-progress-control .vjs-load-progress {
+    background-color: rgba(255, 255, 255, 0.4) !important;
+    border-radius: 2px !important;
+}
+
+.video-js .vjs-progress-control .vjs-play-progress:before {
+    background-color: #ff0000 !important;
+    border-radius: 50% !important;
+    width: 12px !important;
+    height: 12px !important;
+    top: -4px !important;
+    right: -6px !important;
+}
+
+/* Control bar styling */
+.video-js .vjs-control-bar {
+    background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.8) 100%) !important;
+    border-radius: 0 !important;
+    padding: 0 12px !important;
+    height: 48px !important;
+}
+
+/* Button styling */
+.video-js .vjs-button {
+    color: #fff !important;
+    font-size: 16px !important;
+    outline: none !important;
+}
+
+.video-js .vjs-button:hover,
+.video-js .vjs-button:focus {
+    color: #ff0000 !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+}
+
+/* Volume control */
+.video-js .vjs-volume-control {
+    background: none !important;
+}
+
+.video-js .vjs-volume-bar {
+    background: rgba(255, 255, 255, 0.2) !important;
+    border-radius: 2px !important;
+}
+
+.video-js .vjs-volume-level {
+    background: #ff0000 !important;
+    border-radius: 2px !important;
+}
+
+/* Fullscreen styling */
+.video-js.vjs-fullscreen {
+    background: #000 !important;
+}
+
+.video-js.vjs-fullscreen .vjs-control-bar {
+    background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.9) 100%) !important;
+}
+
+/* Error display */
+.video-js .vjs-error-display {
+    background: rgba(0, 0, 0, 0.9) !important;
+    color: #fff !important;
+}
+
+.video-js .vjs-error-display .vjs-modal-dialog-content {
+    color: #ff0000 !important;
+    text-align: center !important;
+    padding: 2em !important;
+    border-radius: 8px !important;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+    .video-js .vjs-control-bar {
+        font-size: 14px !important;
+        height: 44px !important;
+    }
+
+    .video-js .vjs-button {
+        padding: 0.4em !important;
+    }
+
+    .video-js .vjs-progress-control {
+        height: 6px !important;
+    }
+
+    .video-js .vjs-big-play-button {
+        font-size: 2em !important;
+        height: 1.5em !important;
+        width: 1.5em !important;
+        margin-top: -0.75em !important;
+        margin-left: -0.75em !important;
+    }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+    .video-js .vjs-button {
+        min-width: 44px !important;
+        min-height: 44px !important;
+    }
+
+    .video-js .vjs-progress-control .vjs-progress-holder {
+        height: 8px !important;
+    }
+
+    .video-js .vjs-progress-control .vjs-play-progress:before {
+        width: 16px !important;
+        height: 16px !important;
+        top: -4px !important;
+        right: -8px !important;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .video-js .vjs-control-bar {
+        background: rgba(0, 0, 0, 0.95) !important;
+        border-top: 1px solid #fff !important;
+    }
+
+    .video-js .vjs-button {
+        border: 1px solid transparent !important;
+    }
+
+    .video-js .vjs-button:focus {
+        border-color: #fff !important;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .video-js .vjs-big-play-button {
+        transition: none !important;
+    }
+
+    .video-js .vjs-control-bar {
+        transition: none !important;
+    }
 }

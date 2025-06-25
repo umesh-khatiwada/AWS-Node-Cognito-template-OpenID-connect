@@ -9,191 +9,570 @@
     <link rel="stylesheet" href="/css/video-player.css">
     
     <style>
-        body {
+        * {
             margin: 0;
             padding: 0;
-            background: #000;
-            color: white;
-            font-family: 'Netflix Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'YouTube Sans', 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0f0f0f;
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        /* YouTube-style Header */
+        .youtube-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 56px;
+            background: #0f0f0f;
+            border-bottom: 1px solid #333;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            z-index: 2000;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            transition: background 0.2s;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #ff0000;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .header-center {
+            flex: 1;
+            max-width: 600px;
+            margin: 0 16px;
+        }
+
+        .video-title {
+            font-size: 16px;
+            font-weight: 400;
+            color: #fff;
+            text-align: center;
+            white-space: nowrap;
             overflow: hidden;
+            text-overflow: ellipsis;
         }
 
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            transition: background 0.2s;
+        }
+
+        .header-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Main Player Container */
         .player-container {
+            margin-top: 56px;
+            padding: 24px;
+            max-width: 1280px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Video Player Wrapper */
+        .video-wrapper {
             position: relative;
-            width: 100vw;
-            height: 100vh;
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+
+        .video-player {
+            width: 100%;
+            aspect-ratio: 16/9;
             background: #000;
         }
 
-        .player-header {
+        /* YouTube-style Video.js Customization */
+        .video-js {
+            width: 100% !important;
+            height: 100% !important;
+            font-family: 'YouTube Sans', 'Roboto', sans-serif !important;
+        }
+
+        .video-js .vjs-big-play-button {
+            font-size: 3em !important;
+            line-height: 1.5 !important;
+            height: 1.5em !important;
+            width: 1.5em !important;
+            border-radius: 50% !important;
+            background: rgba(0, 0, 0, 0.8) !important;
+            border: none !important;
+            top: 50% !important;
+            left: 50% !important;
+            margin-top: -0.75em !important;
+            margin-left: -0.75em !important;
+            transition: all 0.2s ease !important;
+        }
+
+        .video-js .vjs-big-play-button:hover {
+            background: rgba(0, 0, 0, 0.9) !important;
+            transform: scale(1.1) !important;
+        }
+
+        .video-js .vjs-control-bar {
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.7)) !important;
+            height: 48px !important;
+            padding: 0 12px !important;
+        }
+
+        .video-js .vjs-progress-control {
+            height: 4px !important;
+            top: -2px !important;
+        }
+
+        .video-js .vjs-progress-holder {
+            background: rgba(255, 255, 255, 0.3) !important;
+            height: 4px !important;
+        }
+
+        .video-js .vjs-play-progress {
+            background: #ff0000 !important;
+            height: 4px !important;
+        }
+
+        .video-js .vjs-load-progress {
+            background: rgba(255, 255, 255, 0.5) !important;
+        }
+
+        .video-js .vjs-button {
+            color: #fff !important;
+            font-size: 16px !important;
+        }
+
+        .video-js .vjs-button:hover {
+            color: #ff0000 !important;
+        }
+
+        .video-js .vjs-play-control .vjs-icon-placeholder {
+            font-size: 18px !important;
+        }
+
+        .video-js .vjs-volume-panel {
+            width: auto !important;
+        }
+
+        .video-js .vjs-current-time,
+        .video-js .vjs-duration {
+            font-size: 12px !important;
+            line-height: 48px !important;
+        }
+
+        /* Video Info Section */
+        .video-info {
+            padding: 20px 0;
+            border-bottom: 1px solid #333;
+        }
+
+        .video-title-main {
+            font-size: 20px;
+            font-weight: 400;
+            line-height: 1.3;
+            margin-bottom: 8px;
+            color: #fff;
+        }
+
+        .video-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #aaa;
+            margin-bottom: 16px;
+        }
+
+        .video-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .action-button {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 14px;
+            cursor: pointer;
+            padding: 8px 16px;
+            border-radius: 18px;
+            transition: background 0.2s;
+        }
+
+        .action-button:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .action-button.liked {
+            color: #ff0000;
+        }
+
+        /* Settings Menu */
+        .settings-menu {
+            position: absolute;
+            bottom: 60px;
+            right: 12px;
+            background: rgba(28, 28, 28, 0.95);
+            border-radius: 8px;
+            padding: 8px 0;
+            min-width: 200px;
+            display: none;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .settings-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .settings-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .settings-label {
+            font-size: 14px;
+            color: #fff;
+        }
+
+        .settings-value {
+            font-size: 14px;
+            color: #aaa;
+        }
+
+        /* Quality Selection */
+        .quality-menu {
+            position: absolute;
+            bottom: 60px;
+            right: 12px;
+            background: rgba(28, 28, 28, 0.95);
+            border-radius: 8px;
+            padding: 8px 0;
+            min-width: 150px;
+            display: none;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .quality-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 14px;
+            color: #fff;
+        }
+
+        .quality-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .quality-item.active {
+            color: #ff0000;
+            background: rgba(255, 0, 0, 0.1);
+        }
+
+        /* Loading Spinner */
+        .loading-spinner {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            border-top: 3px solid #ff0000;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            display: none;
+            z-index: 1000;
+        }
+
+        @keyframes spin {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        /* Error State */
+        .error-overlay {
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
-            z-index: 1000;
-            background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, transparent 100%);
-            padding: 20px 30px;
-            display: flex;
-            justify-content: space-between;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            flex-direction: column;
             align-items: center;
-            transition: opacity 0.3s ease;
+            justify-content: center;
+            z-index: 1500;
         }
 
-        .player-header.hidden {
-            opacity: 0;
-            pointer-events: none;
+        .error-icon {
+            font-size: 48px;
+            color: #ff0000;
+            margin-bottom: 16px;
         }
 
-        .back-button {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 8px;
-            text-decoration: none;
+        .error-title {
+            font-size: 20px;
             font-weight: 500;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
+            margin-bottom: 8px;
+            color: #fff;
         }
 
-        .back-button:hover {
-            background: rgba(255,255,255,0.2);
-            transform: translateY(-1px);
-        }
-
-        .video-title-header {
-            flex: 1;
+        .error-message {
+            font-size: 14px;
+            color: #aaa;
             text-align: center;
-            font-size: 1.2rem;
-            font-weight: 600;
-            margin: 0 20px;
-            opacity: 0.9;
+            margin-bottom: 24px;
+            max-width: 400px;
+            line-height: 1.4;
         }
 
-        .player-actions {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-        }
-
-        .action-button {
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
+        .retry-button {
+            background: #ff0000;
             color: white;
-            padding: 8px 12px;
-            border-radius: 6px;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
             cursor: pointer;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
+            transition: background 0.2s;
         }
 
-        .action-button:hover {
-            background: rgba(255,255,255,0.2);
+        .retry-button:hover {
+            background: #cc0000;
         }
 
-        /* Video.js Netflix Theme */
-        .video-js {
-            width: 100%;
-            height: 100%;
-            font-family: 'Netflix Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color: #000;
-        }
-
-        .video-js .vjs-big-play-button {
-            font-size: 2em;
-            line-height: 2;
-            height: 2em;
-            width: 2em;
-            border-radius: 50%;
-            background-color: rgba(229, 9, 20, 0.9);
-            border: 2px solid white;
-            top: 50%;
-            left: 50%;
-            margin-top: -1em;
-            margin-left: -1em;
-            transition: all 0.3s ease;
-        }
-
-        .video-js .vjs-big-play-button:hover {
-            background-color: #e50914;
-            transform: scale(1.1);
-        }
-
-        .video-js .vjs-control-bar {
-            background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.8) 100%);
-            height: 4em;
-            padding: 0 1em;
-        }
-
-        /* Mobile responsiveness */
+        /* Mobile Responsive */
         @media (max-width: 768px) {
-            .player-header {
-                padding: 15px 20px;
+            .player-container {
+                padding: 12px;
+                margin-top: 56px;
             }
 
-            .video-title-header {
-                font-size: 1rem;
+            .header-center {
+                margin: 0 8px;
             }
 
-            .back-button {
-                padding: 8px 16px;
-                font-size: 0.9rem;
+            .video-title {
+                font-size: 14px;
+            }
+
+            .video-title-main {
+                font-size: 18px;
+            }
+
+            .video-actions {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            .action-button {
+                font-size: 12px;
+                padding: 6px 12px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header-center {
+                display: none;
+            }
+
+            .video-wrapper {
+                border-radius: 0;
+                margin: -12px -12px 16px -12px;
             }
         }
     </style>
 </head>
 <body>
-    <div class="player-container">
-        <!-- Header -->
-        <div class="player-header" id="playerHeader">
-            <a href="/" class="back-button">
-                <span>←</span>
-                <span>Back to Library</span>
-            </a>
-            
-            <h1 class="video-title-header" id="videoTitleDisplay">
+    <!-- YouTube-style Header -->
+    <header class="youtube-header">
+        <div class="header-left">
+            <button class="back-btn" onclick="goBack()">←</button>
+            <div class="logo">
+                🎬 VideoHub
+            </div>
+        </div>
+        
+        <div class="header-center">
+            <div class="video-title" id="headerTitle">
                 <%= videoTitle || 'Loading...' %>
-            </h1>
+            </div>
+        </div>
+        
+        <div class="header-right">
+            <button class="header-btn" onclick="toggleTheater()" title="Theater mode">⛶</button>
+            <button class="header-btn" onclick="toggleFullscreen()" title="Fullscreen">⛶</button>
+        </div>
+    </header>
+
+    <!-- Main Player Container -->
+    <div class="player-container">
+        <div class="video-wrapper" id="videoWrapper">
+            <!-- Loading Spinner -->
+            <div class="loading-spinner" id="loadingSpinner"></div>
             
-            <div class="player-actions">
-                <button class="action-button" onclick="toggleFullscreen()" title="Fullscreen">
-                    ⛶
-                </button>
+            <!-- Video Player -->
+            <video
+                id="youtube-player"
+                class="video-js vjs-default-skin video-player"
+                controls
+                preload="auto"
+                data-setup='{}'>
+                <p class="vjs-no-js">
+                    To view this video please enable JavaScript, and consider upgrading to a web browser that
+                    <a href="https://videojs.com/html5-video-support/" target="_blank">supports HTML5 video</a>.
+                </p>
+            </video>
+
+            <!-- Error Overlay -->
+            <div class="error-overlay" id="errorOverlay">
+                <div class="error-icon">⚠️</div>
+                <div class="error-title">An error occurred</div>
+                <div class="error-message" id="errorMessage">
+                    Something went wrong while trying to play this video.
+                </div>
+                <button class="retry-button" onclick="retryPlayback()">Retry</button>
+            </div>
+
+            <!-- Settings Menu -->
+            <div class="settings-menu" id="settingsMenu">
+                <div class="settings-item" onclick="toggleQualityMenu()">
+                    <span class="settings-label">Quality</span>
+                    <span class="settings-value" id="currentQuality">Auto</span>
+                </div>
+                <div class="settings-item" onclick="togglePlaybackSpeed()">
+                    <span class="settings-label">Speed</span>
+                    <span class="settings-value" id="currentSpeed">Normal</span>
+                </div>
+            </div>
+
+            <!-- Quality Menu -->
+            <div class="quality-menu" id="qualityMenu">
+                <div class="quality-item active" data-quality="auto">Auto</div>
+                <div class="quality-item" data-quality="1080p">1080p</div>
+                <div class="quality-item" data-quality="720p">720p</div>
+                <div class="quality-item" data-quality="480p">480p</div>
+                <div class="quality-item" data-quality="360p">360p</div>
             </div>
         </div>
 
-        <!-- Video.js Player -->
-        <video
-            id="netflix-player"
-            class="video-js vjs-default-skin"
-            controls
-            preload="auto"
-            data-setup='{}'>
-            <p class="vjs-no-js">
-                To view this video please enable JavaScript, and consider upgrading to a web browser that
-                <a href="https://videojs.com/html5-video-support/" target="_blank">supports HTML5 video</a>.
-            </p>
-        </video>
+        <!-- Video Info -->
+        <div class="video-info">
+            <h1 class="video-title-main" id="videoTitleMain">
+                <%= videoTitle || 'Loading...' %>
+            </h1>
+            
+            <div class="video-meta">
+                <span id="viewCount">Loading...</span>
+                <span>•</span>
+                <span id="uploadDate">Loading...</span>
+            </div>
+            
+            <div class="video-actions">
+                <button class="action-button" onclick="toggleLike()">
+                    <span>👍</span>
+                    <span>Like</span>
+                </button>
+                <button class="action-button" onclick="toggleDislike()">
+                    <span>👎</span>
+                    <span>Dislike</span>
+                </button>
+                <button class="action-button" onclick="shareVideo()">
+                    <span>📤</span>
+                    <span>Share</span>
+                </button>
+                <button class="action-button" onclick="downloadVideo()">
+                    <span>💾</span>
+                    <span>Save</span>
+                </button>
+                <button class="action-button" onclick="reportVideo()">
+                    <span>🚩</span>
+                    <span>Report</span>
+                </button>
+            </div>
+        </div>
     </div>
 
-    <!-- Video.js JavaScript -->
+    <!-- Scripts -->
     <script src="https://vjs.zencdn.net/8.6.1/video.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@1.4.14/dist/hls.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/videojs-contrib-hls@5.15.0/dist/videojs-contrib-hls.min.js"></script>
     
     <script>
-        class NetflixVideoPlayer {
+        class YouTubeStylePlayer {
             constructor() {
                 this.player = null;
-                this.playerHeader = document.getElementById('playerHeader');
-                this.hideHeaderTimeout = null;
+                this.hls = null;
+                this.currentVideoUrl = null;
+                this.isTheaterMode = false;
+                this.qualities = [];
+                this.currentQuality = 'auto';
+                this.playbackSpeeds = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
+                this.currentSpeedIndex = 3; // 1x speed
                 
                 this.init();
             }
 
             init() {
+                console.log('Initializing YouTube-style Player...');
                 this.loadVideoFromURL();
+                this.setupEventListeners();
             }
 
             loadVideoFromURL() {
@@ -204,32 +583,30 @@
                 console.log('Loading video:', { videoUrl, videoTitle });
 
                 if (videoTitle) {
-                    document.getElementById('videoTitleDisplay').textContent = videoTitle;
-                    document.title = `VideoHub Player - ${videoTitle}`;
+                    document.getElementById('headerTitle').textContent = videoTitle;
+                    document.getElementById('videoTitleMain').textContent = videoTitle;
+                    document.title = `${videoTitle} - VideoHub`;
                 }
 
                 if (!videoUrl) {
-                    this.showError('No video URL provided');
+                    this.showError('No video URL provided', 'Please check the video link and try again.');
                     return;
                 }
 
-                // Decode the URL in case it's double-encoded
-                const decodedUrl = decodeURIComponent(videoUrl);
-                console.log('Decoded video URL:', decodedUrl);
-
-                this.initializePlayer(decodedUrl);
+                this.currentVideoUrl = decodeURIComponent(videoUrl);
+                this.initializePlayer();
             }
 
-            initializePlayer(videoUrl) {
+            initializePlayer() {
                 try {
-                    console.log('Initializing player with URL:', videoUrl);
+                    this.showLoading(true);
                     
-                    // Initialize Video.js player with better error handling
-                    this.player = videojs('netflix-player', {
+                    // Initialize Video.js player with YouTube-like configuration
+                    this.player = videojs('youtube-player', {
                         fluid: false,
-                        responsive: false,
-                        fill: true,
-                        playbackRates: [0.5, 0.75, 1, 1.25, 1.5, 2],
+                        responsive: true,
+                        aspectRatio: '16:9',
+                        playbackRates: this.playbackSpeeds,
                         controls: true,
                         preload: 'auto',
                         autoplay: false,
@@ -237,28 +614,265 @@
                             hls: {
                                 enableLowInitialPlaylist: true,
                                 smoothQualityChange: true,
-                                overrideNative: true
+                                overrideNative: !this.isSafari()
                             },
                             vhs: {
-                                overrideNative: true,
+                                overrideNative: !this.isSafari(),
                                 enableLowInitialPlaylist: true,
                                 smoothQualityChange: true
                             }
                         },
-                        sources: [{
-                            src: videoUrl,
-                            type: this.getVideoType(videoUrl)
-                        }],
-                        techOrder: ['html5']
+                        techOrder: ['html5'],
+                        liveui: true
                     });
 
-                    this.setupPlayerEvents();
-                    this.setupKeyboardShortcuts();
-                    this.setupMouseEvents();
-                    
+                    this.player.ready(() => {
+                        console.log('Player ready');
+                        this.setupVideoSource();
+                        this.setupPlayerEvents();
+                        this.showLoading(false);
+                    });
+
                 } catch (error) {
                     console.error('Error initializing player:', error);
-                    this.showError('Failed to initialize video player: ' + error.message);
+                    this.showError('Player Initialization Failed', error.message);
+                }
+            }
+
+            isSafari() {
+                return /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+            }
+
+            setupVideoSource() {
+                const videoType = this.getVideoType(this.currentVideoUrl);
+                console.log('Setting up video source:', { url: this.currentVideoUrl, type: videoType });
+
+                if (videoType === 'application/x-mpegURL') {
+                    this.setupHLSStream();
+                } else {
+                    this.setupDirectVideo();
+                }
+            }
+
+            setupHLSStream() {
+                console.log('Setting up HLS stream');
+                
+                if (this.hls) {
+                    this.hls.destroy();
+                    this.hls = null;
+                }
+
+                const videoElement = this.player.el().querySelector('video');
+                
+                if (this.isSafari()) {
+                    console.log('Using Safari native HLS support');
+                    this.player.src({
+                        src: this.currentVideoUrl,
+                        type: 'application/x-mpegURL'
+                    });
+                } else if (typeof Hls !== 'undefined' && Hls.isSupported()) {
+                    console.log('Using HLS.js for cross-browser support');
+                    
+                    this.hls = new Hls({
+                        startLevel: -1,
+                        capLevelToPlayerSize: true,
+                        enableWorker: true,
+                        lowLatencyMode: false,
+                        backBufferLength: 90,
+                        maxBufferLength: 30,
+                        maxMaxBufferLength: 600,
+                        liveSyncDurationCount: 3,
+                        liveMaxLatencyDurationCount: 5,
+                        enableSoftwareAES: true,
+                        manifestLoadingTimeOut: 10000,
+                        manifestLoadingMaxRetry: 4,
+                        levelLoadingTimeOut: 10000,
+                        levelLoadingMaxRetry: 4,
+                        fragLoadingTimeOut: 20000,
+                        fragLoadingMaxRetry: 6,
+                        xhrSetup: function(xhr, url) {
+                            xhr.withCredentials = false;
+                        }
+                    });
+
+                    this.hls.loadSource(this.currentVideoUrl);
+                    this.hls.attachMedia(videoElement);
+
+                    this.setupHLSEvents();
+                } else {
+                    console.log('Trying native HLS fallback');
+                    if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
+                        this.player.src({
+                            src: this.currentVideoUrl,
+                            type: 'application/x-mpegURL'
+                        });
+                    } else {
+                        this.showError('Browser Not Supported', 'HLS streaming is not supported in this browser. Please try Chrome, Firefox, Safari, or Edge.');
+                    }
+                }
+            }
+
+            setupDirectVideo() {
+                console.log('Setting up direct video');
+                this.player.src({
+                    src: this.currentVideoUrl,
+                    type: this.getVideoType(this.currentVideoUrl)
+                });
+            }
+
+            setupHLSEvents() {
+                this.hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
+                    console.log('HLS manifest parsed', data);
+                    this.qualities = data.levels.map((level, index) => ({
+                        index: index,
+                        height: level.height,
+                        width: level.width,
+                        bitrate: level.bitrate,
+                        label: `${level.height}p`
+                    }));
+                    this.updateQualityMenu();
+                });
+
+                this.hls.on(Hls.Events.LEVEL_SWITCHED, (event, data) => {
+                    console.log('Quality level switched to:', data.level);
+                    if (this.qualities[data.level]) {
+                        document.getElementById('currentQuality').textContent = 
+                            this.currentQuality === 'auto' ? 'Auto' : this.qualities[data.level].label;
+                    }
+                });
+
+                this.hls.on(Hls.Events.ERROR, (event, data) => {
+                    console.error('HLS error:', data);
+                    
+                    if (data.fatal) {
+                        switch (data.type) {
+                            case Hls.ErrorTypes.NETWORK_ERROR:
+                                console.log('Fatal network error, trying to recover...');
+                                this.hls.startLoad();
+                                break;
+                                
+                            case Hls.ErrorTypes.MEDIA_ERROR:
+                                console.log('Fatal media error, trying to recover...');
+                                this.hls.recoverMediaError();
+                                break;
+                                
+                            default:
+                                console.log('Fatal error, cannot recover');
+                                this.showError('Streaming Error', `Video streaming failed: ${data.details}`);
+                                break;
+                        }
+                    } else {
+                        console.warn('Non-fatal HLS error:', data.details);
+                    }
+                });
+
+                this.hls.on(Hls.Events.FRAG_LOADED, (event, data) => {
+                    console.log('Fragment loaded successfully');
+                });
+            }
+
+            setupPlayerEvents() {
+                this.player.on('loadstart', () => {
+                    console.log('Video loading started');
+                    this.showLoading(true);
+                });
+
+                this.player.on('loadedmetadata', () => {
+                    console.log('Video metadata loaded');
+                    this.updateVideoInfo();
+                });
+
+                this.player.on('canplay', () => {
+                    console.log('Video can start playing');
+                    this.showLoading(false);
+                });
+
+                this.player.on('play', () => {
+                    console.log('Video started playing');
+                });
+
+                this.player.on('pause', () => {
+                    console.log('Video paused');
+                });
+
+                this.player.on('ended', () => {
+                    console.log('Video ended');
+                    this.onVideoEnded();
+                });
+
+                this.player.on('error', () => {
+                    const error = this.player.error();
+                    console.error('Player error:', error);
+                    this.handlePlayerError(error);
+                });
+
+                this.player.on('waiting', () => {
+                    this.showLoading(true);
+                });
+
+                this.player.on('playing', () => {
+                    this.showLoading(false);
+                });
+
+                // Custom keyboard shortcuts
+                this.player.on('keydown', (event) => {
+                    this.handleKeyboardShortcuts(event.which || event.keyCode);
+                });
+            }
+
+            setupEventListeners() {
+                // Click outside to close menus
+                document.addEventListener('click', (e) => {
+                    if (!e.target.closest('.settings-menu') && !e.target.closest('.quality-menu')) {
+                        this.hideAllMenus();
+                    }
+                });
+
+                // Keyboard shortcuts
+                document.addEventListener('keydown', (e) => {
+                    this.handleKeyboardShortcuts(e.keyCode);
+                });
+
+                // Quality menu items
+                document.querySelectorAll('.quality-item').forEach(item => {
+                    item.addEventListener('click', (e) => {
+                        this.setQuality(e.target.dataset.quality);
+                    });
+                });
+            }
+
+            handleKeyboardShortcuts(keyCode) {
+                if (!this.player) return;
+
+                switch (keyCode) {
+                    case 32: // Space
+                        if (this.player.paused()) {
+                            this.player.play();
+                        } else {
+                            this.player.pause();
+                        }
+                        break;
+                    case 37: // Left arrow
+                        this.player.currentTime(Math.max(0, this.player.currentTime() - 10));
+                        break;
+                    case 39: // Right arrow
+                        this.player.currentTime(Math.min(this.player.duration(), this.player.currentTime() + 10));
+                        break;
+                    case 38: // Up arrow
+                        this.player.volume(Math.min(1, this.player.volume() + 0.1));
+                        break;
+                    case 40: // Down arrow
+                        this.player.volume(Math.max(0, this.player.volume() - 0.1));
+                        break;
+                    case 70: // F key
+                        this.toggleFullscreen();
+                        break;
+                    case 77: // M key
+                        this.player.muted(!this.player.muted());
+                        break;
+                    case 84: // T key
+                        this.toggleTheater();
+                        break;
                 }
             }
 
@@ -271,274 +885,232 @@
                     return 'video/webm';
                 } else if (url.includes('.mov')) {
                     return 'video/quicktime';
+                } else if (url.includes('.avi')) {
+                    return 'video/x-msvideo';
                 } else {
-                    return 'application/x-mpegURL'; // Default to HLS
+                    return 'application/x-mpegURL';
                 }
             }
 
-            setupPlayerEvents() {
-                this.player.ready(() => {
-                    console.log('Player is ready');
-                    this.hideHeaderDelayed();
-                    
-                    // Try to load the video
-                    this.player.load();
-                });
+            showLoading(show) {
+                const spinner = document.getElementById('loadingSpinner');
+                spinner.style.display = show ? 'block' : 'none';
+            }
 
-                this.player.on('loadstart', () => {
-                    console.log('Video loading started');
-                });
+            showError(title, message) {
+                const overlay = document.getElementById('errorOverlay');
+                const messageEl = document.getElementById('errorMessage');
+                
+                overlay.querySelector('.error-title').textContent = title;
+                messageEl.textContent = message;
+                overlay.style.display = 'flex';
+                
+                this.showLoading(false);
+            }
 
-                this.player.on('loadedmetadata', () => {
-                    console.log('Video metadata loaded');
-                    console.log('Duration:', this.player.duration());
-                });
+            hideError() {
+                document.getElementById('errorOverlay').style.display = 'none';
+            }
 
-                this.player.on('canplay', () => {
-                    console.log('Video can start playing');
-                });
+            updateVideoInfo() {
+                const duration = this.player.duration();
+                if (duration && !isNaN(duration)) {
+                    // Update video metadata (placeholder for now)
+                    document.getElementById('viewCount').textContent = 'Processing...';
+                    document.getElementById('uploadDate').textContent = new Date().toLocaleDateString();
+                }
+            }
 
-                this.player.on('play', () => {
-                    console.log('Video started playing');
-                    this.hideHeaderDelayed();
+            updateQualityMenu() {
+                const menu = document.getElementById('qualityMenu');
+                const items = this.qualities.map((quality, index) => 
+                    `<div class="quality-item" data-quality="${index}">${quality.label}</div>`
+                ).join('');
+                
+                menu.innerHTML = `
+                    <div class="quality-item active" data-quality="auto">Auto</div>
+                    ${items}
+                `;
+                
+                // Re-attach event listeners
+                menu.querySelectorAll('.quality-item').forEach(item => {
+                    item.addEventListener('click', (e) => {
+                        this.setQuality(e.target.dataset.quality);
+                    });
                 });
+            }
 
-                this.player.on('pause', () => {
-                    console.log('Video paused');
-                    this.showHeader();
-                });
-
-                this.player.on('ended', () => {
-                    console.log('Video ended');
-                    this.showHeader();
-                });
-
-                this.player.on('error', (event) => {
-                    const error = this.player.error();
-                    console.error('Player error event:', event);
-                    console.error('Player error details:', error);
-                    
-                    let errorMessage = 'Failed to load video.';
-                    if (error) {
-                        switch (error.code) {
-                            case 1:
-                                errorMessage = 'Video loading was aborted.';
-                                break;
-                            case 2:
-                                errorMessage = 'Network error occurred while loading video.';
-                                break;
-                            case 3:
-                                errorMessage = 'Video decoding error.';
-                                break;
-                            case 4:
-                                errorMessage = 'Video format not supported.';
-                                break;
-                            default:
-                                errorMessage = `Video error (${error.code}): ${error.message || 'Unknown error'}`;
+            setQuality(quality) {
+                if (this.hls) {
+                    if (quality === 'auto') {
+                        this.hls.currentLevel = -1;
+                        this.currentQuality = 'auto';
+                    } else {
+                        const levelIndex = parseInt(quality);
+                        if (levelIndex >= 0 && levelIndex < this.qualities.length) {
+                            this.hls.currentLevel = levelIndex;
+                            this.currentQuality = this.qualities[levelIndex].label;
                         }
                     }
                     
-                    this.showError(errorMessage);
-                });
-
-                this.player.on('waiting', () => {
-                    console.log('Video is buffering');
-                });
-
-                this.player.on('playing', () => {
-                    console.log('Video is playing after buffering');
-                });
-
-                // Add additional debugging for HLS
-                this.player.ready(() => {
-                    if (this.player.tech_ && this.player.tech_.hls) {
-                        console.log('HLS tech available');
-                        this.player.tech_.hls.on('hlsError', (event, data) => {
-                            console.error('HLS Error:', data);
-                        });
-                    }
-                });
+                    document.getElementById('currentQuality').textContent = 
+                        this.currentQuality === 'auto' ? 'Auto' : this.currentQuality;
+                }
+                
+                this.hideAllMenus();
             }
 
-            setupKeyboardShortcuts() {
-                document.addEventListener('keydown', (e) => {
-                    if (!this.player) return;
+            hideAllMenus() {
+                document.getElementById('settingsMenu').style.display = 'none';
+                document.getElementById('qualityMenu').style.display = 'none';
+            }
 
-                    switch (e.code) {
-                        case 'Space':
-                            e.preventDefault();
-                            if (this.player.paused()) {
-                                this.player.play().catch(err => console.error('Play failed:', err));
-                            } else {
-                                this.player.pause();
-                            }
+            onVideoEnded() {
+                // Handle video end (show related videos, etc.)
+                console.log('Video playback completed');
+            }
+
+            handlePlayerError(error) {
+                let title = 'Playback Error';
+                let message = 'An error occurred while playing the video.';
+                
+                if (error) {
+                    switch (error.code) {
+                        case 1:
+                            title = 'Video Loading Aborted';
+                            message = 'Video loading was interrupted.';
                             break;
-                        case 'ArrowLeft':
-                            e.preventDefault();
-                            this.player.currentTime(Math.max(0, this.player.currentTime() - 10));
-                            this.showSkipIndicator('-10s');
+                        case 2:
+                            title = 'Network Error';
+                            message = 'A network error occurred while loading the video.';
                             break;
-                        case 'ArrowRight':
-                            e.preventDefault();
-                            this.player.currentTime(Math.min(this.player.duration(), this.player.currentTime() + 10));
-                            this.showSkipIndicator('+10s');
+                        case 3:
+                            title = 'Decoding Error';
+                            message = 'The video could not be decoded.';
                             break;
-                        case 'KeyF':
-                            e.preventDefault();
-                            if (this.player.isFullscreen()) {
-                                this.player.exitFullscreen();
-                            } else {
-                                this.player.requestFullscreen();
-                            }
+                        case 4:
+                            title = 'Format Not Supported';
+                            message = 'The video format is not supported by this browser.';
                             break;
-                        case 'KeyM':
-                            e.preventDefault();
-                            this.player.muted(!this.player.muted());
-                            break;
+                        default:
+                            message = error.message || 'Unknown error occurred.';
                     }
-                    this.showHeader();
-                });
-            }
-
-            setupMouseEvents() {
-                document.addEventListener('mousemove', () => this.showHeader());
-                document.addEventListener('touchstart', () => this.showHeader());
+                }
                 
-                // Click on player to toggle play/pause
-                this.player.on('click', () => {
-                    if (this.player.paused()) {
-                        this.player.play().catch(err => console.error('Play failed:', err));
-                    } else {
-                        this.player.pause();
-                    }
-                });
-            }
-
-            showHeader() {
-                this.playerHeader.classList.remove('hidden');
-                clearTimeout(this.hideHeaderTimeout);
-                this.hideHeaderDelayed();
-            }
-
-            hideHeaderDelayed() {
-                clearTimeout(this.hideHeaderTimeout);
-                this.hideHeaderTimeout = setTimeout(() => {
-                    if (this.player && !this.player.paused() && !this.player.ended()) {
-                        this.playerHeader.classList.add('hidden');
-                    }
-                }, 3000);
-            }
-
-            showSkipIndicator(text) {
-                const indicator = document.createElement('div');
-                indicator.textContent = text;
-                indicator.style.cssText = `
-                    position: absolute;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-                    background: rgba(0,0,0,0.8);
-                    color: white;
-                    padding: 10px 20px;
-                    border-radius: 4px;
-                    font-size: 1.2rem;
-                    font-weight: bold;
-                    z-index: 1001;
-                    pointer-events: none;
-                    animation: fadeInOut 1s ease-in-out;
-                `;
-                
-                document.body.appendChild(indicator);
-                
-                setTimeout(() => {
-                    if (indicator.parentNode) {
-                        indicator.parentNode.removeChild(indicator);
-                    }
-                }, 1000);
-            }
-
-            showError(message) {
-                console.error('Showing error:', message);
-                
-                // Create error overlay
-                const errorOverlay = document.createElement('div');
-                errorOverlay.style.cssText = `
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    background: rgba(0,0,0,0.9);
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                    z-index: 2000;
-                    color: white;
-                    text-align: center;
-                    padding: 20px;
-                `;
-                
-                errorOverlay.innerHTML = `
-                    <div style="font-size: 3rem; margin-bottom: 20px; color: #e50914;">⚠️</div>
-                    <h2 style="margin-bottom: 20px; font-size: 1.5rem;">Video Player Error</h2>
-                    <p style="margin-bottom: 30px; font-size: 1.1rem; max-width: 600px; line-height: 1.5;">${message}</p>
-                    <button onclick="window.history.back()" style="
-                        background: #e50914;
-                        color: white;
-                        border: none;
-                        padding: 12px 24px;
-                        border-radius: 6px;
-                        font-size: 1rem;
-                        cursor: pointer;
-                        transition: background 0.3s ease;
-                    " onmouseover="this.style.background='#f40612'" onmouseout="this.style.background='#e50914'">
-                        ← Go Back
-                    </button>
-                `;
-                
-                document.body.appendChild(errorOverlay);
+                this.showError(title, message);
             }
 
             destroy() {
+                if (this.hls) {
+                    this.hls.destroy();
+                    this.hls = null;
+                }
                 if (this.player) {
                     this.player.dispose();
+                    this.player = null;
                 }
             }
+        }
+
+        // Global functions
+        function goBack() {
+            window.history.back();
         }
 
         function toggleFullscreen() {
-            if (window.netflixPlayer && window.netflixPlayer.player) {
-                if (window.netflixPlayer.player.isFullscreen()) {
-                    window.netflixPlayer.player.exitFullscreen();
+            if (window.youtubePlayer && window.youtubePlayer.player) {
+                if (window.youtubePlayer.player.isFullscreen()) {
+                    window.youtubePlayer.player.exitFullscreen();
                 } else {
-                    window.netflixPlayer.player.requestFullscreen();
+                    window.youtubePlayer.player.requestFullscreen();
                 }
             }
         }
 
-        // Add fade animation for skip indicator
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes fadeInOut {
-                0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
-                20% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-                80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-                100% { opacity: 0; transform: translate(-50%, -50%) scale(1.1); }
+        function toggleTheater() {
+            // Theater mode implementation
+            const container = document.querySelector('.player-container');
+            const wrapper = document.getElementById('videoWrapper');
+            
+            if (window.youtubePlayer.isTheaterMode) {
+                container.style.maxWidth = '1280px';
+                wrapper.style.height = 'auto';
+                window.youtubePlayer.isTheaterMode = false;
+            } else {
+                container.style.maxWidth = '100%';
+                wrapper.style.height = '70vh';
+                window.youtubePlayer.isTheaterMode = true;
             }
-        `;
-        document.head.appendChild(style);
+        }
+
+        function retryPlayback() {
+            if (window.youtubePlayer) {
+                window.youtubePlayer.hideError();
+                window.youtubePlayer.setupVideoSource();
+            }
+        }
+
+        function toggleQualityMenu() {
+            const menu = document.getElementById('qualityMenu');
+            menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function togglePlaybackSpeed() {
+            if (window.youtubePlayer && window.youtubePlayer.player) {
+                window.youtubePlayer.currentSpeedIndex = 
+                    (window.youtubePlayer.currentSpeedIndex + 1) % window.youtubePlayer.playbackSpeeds.length;
+                
+                const newSpeed = window.youtubePlayer.playbackSpeeds[window.youtubePlayer.currentSpeedIndex];
+                window.youtubePlayer.player.playbackRate(newSpeed);
+                
+                document.getElementById('currentSpeed').textContent = 
+                    newSpeed === 1 ? 'Normal' : `${newSpeed}x`;
+            }
+        }
+
+        function toggleLike() {
+            // Implement like functionality
+            console.log('Like toggled');
+        }
+
+        function toggleDislike() {
+            // Implement dislike functionality
+            console.log('Dislike toggled');
+        }
+
+        function shareVideo() {
+            if (navigator.share) {
+                navigator.share({
+                    title: document.getElementById('videoTitleMain').textContent,
+                    url: window.location.href
+                });
+            } else {
+                // Fallback: copy to clipboard
+                navigator.clipboard.writeText(window.location.href);
+                alert('Video link copied to clipboard!');
+            }
+        }
+
+        function downloadVideo() {
+            // Implement download functionality
+            alert('Download feature coming soon!');
+        }
+
+        function reportVideo() {
+            // Implement report functionality
+            alert('Report submitted. Thank you for helping keep our platform safe.');
+        }
 
         // Initialize player when page loads
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('DOM loaded, initializing player...');
-            window.netflixPlayer = new NetflixVideoPlayer();
+            console.log('DOM loaded, initializing YouTube-style player...');
+            window.youtubePlayer = new YouTubeStylePlayer();
         });
 
         // Cleanup on page unload
         window.addEventListener('beforeunload', () => {
-            if (window.netflixPlayer) {
-                window.netflixPlayer.destroy();
+            if (window.youtubePlayer) {
+                window.youtubePlayer.destroy();
             }
         });
     </script>

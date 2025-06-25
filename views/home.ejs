@@ -898,7 +898,7 @@
             </div>
         </div>
 
-        <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+        <script src="https://cdn.jsdelivr.net/npm/hls.js@1.4.14/dist/hls.min.js"></script>
         <script>
             // Header scroll effect
             window.addEventListener('scroll', () => {
@@ -1013,7 +1013,10 @@
             }
     
             function playVideo(playbackUrl, title) {
-                console.log('Attempting to play video:', playbackUrl); // Debug log
+                console.log('Attempting to play video:', playbackUrl);
+                console.log('User agent:', navigator.userAgent);
+                console.log('HLS.js available:', typeof Hls !== 'undefined');
+                console.log('HLS.js supported:', typeof Hls !== 'undefined' ? Hls.isSupported() : false);
                 
                 const modal = document.getElementById('videoModal');
                 const video = document.getElementById('modalVideo');
@@ -1033,15 +1036,32 @@
                 
                 // Check if it's an HLS stream (.m3u8)
                 if (playbackUrl.includes('.m3u8')) {
-                    console.log('Detected HLS stream, using HLS.js');
+                    console.log('Detected HLS stream');
                     
-                    if (Hls.isSupported()) {
+                    // Check if Safari (has native HLS support)
+                    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+                    
+                    if (isSafari) {
+                        console.log('Using Safari native HLS support');
+                        video.src = playbackUrl;
+                        video.play().catch(e => console.error('Safari native play failed:', e));
+                    } else if (typeof Hls !== 'undefined' && Hls.isSupported()) {
+                        console.log('Using HLS.js for cross-browser support');
+                        
                         const hls = new Hls({
                             startLevel: -1,
                             capLevelToPlayerSize: true,
                             enableWorker: true,
                             lowLatencyMode: true,
-                            backBufferLength: 90
+                            backBufferLength: 90,
+                            maxBufferLength: 30,
+                            enableSoftwareAES: true,
+                            manifestLoadingTimeOut: 10000,
+                            manifestLoadingMaxRetry: 4,
+                            levelLoadingTimeOut: 10000,
+                            levelLoadingMaxRetry: 4,
+                            fragLoadingTimeOut: 20000,
+                            fragLoadingMaxRetry: 6
                         });
 
                         hls.loadSource(playbackUrl);
@@ -1049,7 +1069,7 @@
                         
                         hls.on(Hls.Events.MANIFEST_PARSED, function () {
                             console.log('HLS manifest parsed, starting playback');
-                            video.play().catch(e => console.error('Play failed:', e));
+                            video.play().catch(e => console.error('HLS.js play failed:', e));
                         });
                         
                         hls.on(Hls.Events.ERROR, function (event, data) {
@@ -1057,15 +1077,16 @@
                             if (data.fatal) {
                                 switch (data.type) {
                                     case Hls.ErrorTypes.NETWORK_ERROR:
-                                        console.log('Fatal network error encountered, trying to recover');
+                                        console.log('Fatal network error, trying to recover');
                                         hls.startLoad();
                                         break;
                                     case Hls.ErrorTypes.MEDIA_ERROR:
-                                        console.log('Fatal media error encountered, trying to recover');
+                                        console.log('Fatal media error, trying to recover');
                                         hls.recoverMediaError();
                                         break;
                                     default:
                                         console.log('Fatal error, cannot recover');
+                                        alert('Video streaming error. Please try refreshing the page.');
                                         hls.destroy();
                                         break;
                                 }
@@ -1074,15 +1095,14 @@
 
                         video.hlsInstance = hls;
                     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-                        console.log('Using native HLS support');
+                        console.log('Using native HLS support fallback');
                         video.src = playbackUrl;
-                        video.play().catch(e => console.error('Native play failed:', e));
+                        video.play().catch(e => console.error('Native HLS fallback failed:', e));
                     } else {
-                        alert('HLS is not supported in this browser');
+                        alert('HLS streaming is not supported in this browser. Please try Safari, Chrome, or Firefox with a recent version.');
                     }
                 } else {
                     console.log('Direct video file, using native player');
-                    // Direct video file (MP4, etc.)
                     video.src = playbackUrl;
                     video.play().catch(e => {
                         console.error('Direct play failed:', e);
@@ -1090,10 +1110,16 @@
                     });
                 }
                 
-                // Add error handling for the video element
+                // Enhanced error handling
                 video.onerror = function(e) {
                     console.error('Video element error:', e);
-                    alert('Error loading video. Please check the video URL or format.');
+                    console.error('Video error details:', {
+                        error: video.error,
+                        networkState: video.networkState,
+                        readyState: video.readyState,
+                        currentSrc: video.currentSrc
+                    });
+                    alert('Error loading video. Please check your internet connection and try again.');
                 };
                 
                 video.onloadstart = function() {
@@ -1102,6 +1128,10 @@
                 
                 video.oncanplay = function() {
                     console.log('Video can start playing');
+                };
+
+                video.onloadeddata = function() {
+                    console.log('Video data loaded');
                 };
             }
 

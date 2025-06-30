@@ -160,7 +160,7 @@
                     // Default thumbnail logic
                     let thumbnailSrc = video.thumbnail || video.thumbnailUrl;
                     if (!thumbnailSrc || thumbnailSrc.trim() === '') {
-                        thumbnailSrc = '/img/video-processing.png';
+                        thumbnailSrc = './img/video-processing.png';
                     }
 
                     return `
@@ -168,7 +168,7 @@
                             <img src="${thumbnailSrc}" 
                                  alt="${video.fileName}" 
                                  class="video-thumbnail"
-                                 onerror="this.src='/img/video-processing.png'">
+                                 onerror="this.src='./img/video-processing.png'">
                             
                             <div class="video-overlay">
                                 <div class="video-info">
@@ -389,7 +389,7 @@
             <div class="login-container">
                 <div class="login-header">
                     <div class="aws-logo">🎬</div>
-                    <h1 class="login-title">VideoHub</h1>
+                    <h1 class="login-title">VideoCenter</h1>
                     <p class="login-subtitle">Professional Video Management Platform</p>
                 </div>
                 

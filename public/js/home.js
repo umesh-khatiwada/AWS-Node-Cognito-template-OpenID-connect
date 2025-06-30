@@ -80,7 +80,7 @@
                             <img src="${thumbnailSrc}" 
                                  alt="${video.fileName}" 
                                  class="video-thumbnail"
-                                 onerror="this.onerror=null;this.src='/img/video-processing.png'">
+                                 onerror="this.onerror=null;this.src='./img/video-processing.png'">
                             
                             <div class="video-overlay">
                                 <div class="video-info">

@@ -290,7 +290,7 @@ app.get('/logout', (req, res) => {
         redirect_uri = `${process.env.REDIRECT_UR}`;
     req.session.destroy(() => {
         const redirectUri = redirect_uri;
-        const logoutUrl = `${cognitoDomain}/logout?client_id=7mcc0trmggj5145u6jd1sg919a&logout_uri=${encodeURIComponent(redirectUri)}`;
+        const logoutUrl = `${cognitoDomain}/logout?client_id=${process.env.COGNITO_CLIENT_ID}&logout_uri=${encodeURIComponent(redirectUri)}`;
         res.redirect(logoutUrl);
     });
 });
